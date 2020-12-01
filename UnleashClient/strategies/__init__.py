@@ -7,3 +7,4 @@ from .GradualRolloutRandom import GradualRolloutRandom
 from .RemoteAddress import RemoteAddress
 from .ApplicationHostname import ApplicationHostname
 from .FlexibleRolloutStrategy import FlexibleRollout
+from .EnableForDomainStrategy import EnableForDomains

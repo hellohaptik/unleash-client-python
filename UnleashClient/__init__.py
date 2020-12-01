@@ -8,7 +8,7 @@ from apscheduler.triggers.interval import IntervalTrigger
 from UnleashClient.api import register_client
 from UnleashClient.periodic_tasks import fetch_and_load_features, aggregate_and_send_metrics
 from UnleashClient.strategies import ApplicationHostname, Default, GradualRolloutRandom, \
-    GradualRolloutSessionId, GradualRolloutUserId, UserWithId, RemoteAddress, FlexibleRollout
+    GradualRolloutSessionId, GradualRolloutUserId, UserWithId, RemoteAddress, FlexibleRollout, EnableForDomains
 from UnleashClient.constants import METRIC_LAST_SENT_TIME, DISABLED_VARIATION
 from .utils import LOGGER
 from .deprecation_warnings import strategy_v2xx_deprecation_check, default_value_warning
@@ -82,7 +82,8 @@ class UnleashClient():
             "gradualRolloutUserId": GradualRolloutUserId,
             "remoteAddress": RemoteAddress,
             "userWithId": UserWithId,
-            "flexibleRollout": FlexibleRollout
+            "flexibleRollout": FlexibleRollout,
+            "EnableForDomains": EnableForDomains
         }
 
         if custom_strategies:
