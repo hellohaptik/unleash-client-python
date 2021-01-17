@@ -22,7 +22,9 @@ def _create_strategies(provisioning: dict,
             else:
                 constraint_provisioning = {}
 
-            feature_strategies.append(strategy_mapping[strategy['name']](constraints=constraint_provisioning, parameters=strategy_provisioning))
+            feature_strategies.append(
+                strategy_mapping[strategy['name']](constraints=constraint_provisioning, parameters=strategy_provisioning)
+            )
         except Exception as excep:
             LOGGER.warning("Failed to load strategy.  This may be a problem with a custom strategy.  Exception: %s",
                            excep)
@@ -61,11 +63,13 @@ def load_features(cache: FileCache,
     """
     # Pull raw provisioning from cache.
     try:
-        feature_provisioning = cache[FEATURES_URL]
+        feature_provisioning = cache.get(FEATURES_URL)
 
         # Parse provisioning
         parsed_features = {}
-        feature_names = [d["name"] for d in feature_provisioning["features"]]
+        feature_names = [
+            d["name"] for d in feature_provisioning["features"]
+        ]
 
         for provisioning in feature_provisioning["features"]:
             parsed_features[provisioning["name"]] = provisioning

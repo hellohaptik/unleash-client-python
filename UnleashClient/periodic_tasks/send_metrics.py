@@ -1,6 +1,6 @@
 from collections import ChainMap
 from datetime import datetime, timezone
-import fcache
+import redis
 from UnleashClient.api import send_metrics
 from UnleashClient.constants import METRIC_LAST_SENT_TIME
 
@@ -11,7 +11,7 @@ def aggregate_and_send_metrics(url: str,
                                custom_headers: dict,
                                custom_options: dict,
                                features: dict,
-                               ondisk_cache: fcache.cache
+                               ondisk_cache: redis.Redis
                                ) -> None:
     feature_stats_list = []
 
@@ -26,16 +26,19 @@ def aggregate_and_send_metrics(url: str,
         features[feature_name].reset_stats()
         feature_stats_list.append(feature_stats)
 
+    metric_last_seen_time = ondisk_cache.get(
+        METRIC_LAST_SENT_TIME
+    )
+
     metrics_request = {
         "appName": app_name,
         "instanceId": instance_id,
         "bucket": {
-            "start": ondisk_cache[METRIC_LAST_SENT_TIME].isoformat(),
+            "start": metric_last_seen_time.isoformat(),
             "stop": datetime.now(timezone.utc).isoformat(),
             "toggles": dict(ChainMap(*feature_stats_list))
         }
     }
 
     send_metrics(url, metrics_request, custom_headers, custom_options)
-    ondisk_cache[METRIC_LAST_SENT_TIME] = datetime.now(timezone.utc)
-    ondisk_cache.sync()
+    ondisk_cache.set(METRIC_LAST_SENT_TIME, datetime.now(timezone.utc))

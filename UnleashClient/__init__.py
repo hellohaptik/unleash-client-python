@@ -1,3 +1,4 @@
+import redis
 from datetime import datetime, timezone
 from typing import Dict, Callable, Any
 import copy
@@ -9,7 +10,7 @@ from UnleashClient.api import register_client
 from UnleashClient.periodic_tasks import fetch_and_load_features, aggregate_and_send_metrics
 from UnleashClient.strategies import ApplicationHostname, Default, GradualRolloutRandom, \
     GradualRolloutSessionId, GradualRolloutUserId, UserWithId, RemoteAddress, FlexibleRollout, EnableForDomains
-from UnleashClient.constants import METRIC_LAST_SENT_TIME, DISABLED_VARIATION
+from UnleashClient.constants import METRIC_LAST_SENT_TIME, DISABLED_VARIATION, REDIS_HOST, REDIS_PORT, REDIS_DB
 from .utils import LOGGER
 from .deprecation_warnings import strategy_v2xx_deprecation_check, default_value_warning
 
@@ -65,13 +66,19 @@ class UnleashClient():
         }
 
         # Class objects
-        self.cache = FileCache(self.unleash_instance_id, app_cache_dir=cache_directory)
+        self.cache =  redis.Redis(
+            host=REDIS_HOST,
+            port=REDIS_PORT,
+            db=REDIS_DB
+        )
         self.features = {}  # type: Dict
         self.scheduler = BackgroundScheduler()
         self.fl_job = None  # type: Job
         self.metric_job = None  # type: Job
-        self.cache[METRIC_LAST_SENT_TIME] = datetime.now(timezone.utc)
-        self.cache.sync()
+        self.cache.set(
+            METRIC_LAST_SENT_TIME,
+            datetime.now(timezone.utc)
+        )
 
         # Mappings
         default_strategy_mapping = {
@@ -129,22 +136,28 @@ class UnleashClient():
 
         # Register app
         if not self.unleash_disable_registration:
-            register_client(self.unleash_url, self.unleash_app_name, self.unleash_instance_id,
-                            self.unleash_metrics_interval, self.unleash_custom_headers,
-                            self.unleash_custom_options, self.strategy_mapping)
+            register_client(
+                self.unleash_url, self.unleash_app_name, self.unleash_instance_id,
+                self.unleash_metrics_interval, self.unleash_custom_headers,
+                self.unleash_custom_options, self.strategy_mapping
+            )
 
         fetch_and_load_features(**fl_args)
 
         # Start periodic jobs
         self.scheduler.start()
-        self.fl_job = self.scheduler.add_job(fetch_and_load_features,
-                                             trigger=IntervalTrigger(seconds=int(self.unleash_refresh_interval)),
-                                             kwargs=fl_args)
+        self.fl_job = self.scheduler.add_job(
+            fetch_and_load_features,
+            trigger=IntervalTrigger(seconds=int(self.unleash_refresh_interval)),
+            kwargs=fl_args
+        )
 
         if not self.unleash_disable_metrics:
-            self.metric_job = self.scheduler.add_job(aggregate_and_send_metrics,
-                                                     trigger=IntervalTrigger(seconds=int(self.unleash_metrics_interval)),
-                                                     kwargs=metrics_args)
+            self.metric_job = self.scheduler.add_job(
+                aggregate_and_send_metrics,
+                trigger=IntervalTrigger(seconds=int(self.unleash_metrics_interval)),
+                kwargs=metrics_args
+            )
 
         self.is_initialized = True
 
