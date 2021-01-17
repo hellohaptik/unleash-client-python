@@ -1,4 +1,5 @@
 import redis
+import pickle
 from UnleashClient.api import get_feature_toggles
 from UnleashClient.loader import load_features
 from UnleashClient.constants import FEATURES_URL
@@ -19,7 +20,7 @@ def fetch_and_load_features(url: str,
     )
 
     if feature_provisioning:
-        cache.set(FEATURES_URL, feature_provisioning)
+        cache.set(FEATURES_URL, pickle.dumps(feature_provisioning))
     else:
         LOGGER.warning("Unable to get feature flag toggles, using cached provisioning.")
 

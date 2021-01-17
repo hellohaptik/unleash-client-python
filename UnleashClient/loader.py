@@ -1,4 +1,5 @@
-from fcache.cache import FileCache
+import redis
+import pickle
 from UnleashClient.features.Feature import Feature
 from UnleashClient.variants.Variants import Variants
 from UnleashClient.constants import FEATURES_URL
@@ -51,7 +52,7 @@ def _create_feature(provisioning: dict,
                    )
 
 
-def load_features(cache: FileCache,
+def load_features(cache: redis.Redis,
                   feature_toggles: dict,
                   strategy_mapping: dict) -> None:
     """
@@ -63,7 +64,7 @@ def load_features(cache: FileCache,
     """
     # Pull raw provisioning from cache.
     try:
-        feature_provisioning = cache.get(FEATURES_URL)
+        feature_provisioning = pickle.loads(cache.get(FEATURES_URL))
 
         # Parse provisioning
         parsed_features = {}

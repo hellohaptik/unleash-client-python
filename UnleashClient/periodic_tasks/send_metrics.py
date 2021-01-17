@@ -1,6 +1,7 @@
+import redis
+import pickle
 from collections import ChainMap
 from datetime import datetime, timezone
-import redis
 from UnleashClient.api import send_metrics
 from UnleashClient.constants import METRIC_LAST_SENT_TIME
 
@@ -26,8 +27,10 @@ def aggregate_and_send_metrics(url: str,
         features[feature_name].reset_stats()
         feature_stats_list.append(feature_stats)
 
-    metric_last_seen_time = ondisk_cache.get(
-        METRIC_LAST_SENT_TIME
+    metric_last_seen_time = pickle.loads(
+        ondisk_cache.get(
+            METRIC_LAST_SENT_TIME
+        )
     )
 
     metrics_request = {
@@ -41,4 +44,7 @@ def aggregate_and_send_metrics(url: str,
     }
 
     send_metrics(url, metrics_request, custom_headers, custom_options)
-    ondisk_cache.set(METRIC_LAST_SENT_TIME, datetime.now(timezone.utc))
+    ondisk_cache.set(
+        METRIC_LAST_SENT_TIME,
+        pickle.dumps(datetime.now(timezone.utc))
+    )

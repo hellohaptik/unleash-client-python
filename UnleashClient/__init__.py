@@ -1,4 +1,5 @@
 import redis
+import pickle
 from datetime import datetime, timezone
 from typing import Dict, Callable, Any
 import copy
@@ -77,7 +78,7 @@ class UnleashClient():
         self.metric_job = None  # type: Job
         self.cache.set(
             METRIC_LAST_SENT_TIME,
-            datetime.now(timezone.utc)
+            pickle.dumps(datetime.now(timezone.utc))
         )
 
         # Mappings
