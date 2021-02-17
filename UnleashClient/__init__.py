@@ -153,12 +153,12 @@ class UnleashClient():
             kwargs=fl_args
         )
 
-        if not self.unleash_disable_metrics:
-            self.metric_job = self.scheduler.add_job(
-                aggregate_and_send_metrics,
-                trigger=IntervalTrigger(seconds=int(self.unleash_metrics_interval)),
-                kwargs=metrics_args
-            )
+        # if not self.unleash_disable_metrics:
+        #     self.metric_job = self.scheduler.add_job(
+        #         aggregate_and_send_metrics,
+        #         trigger=IntervalTrigger(seconds=int#( self.unleash_metrics_interval)),
+        #         kwargs=metrics_args
+        #     )
 
         self.is_initialized = True
 
