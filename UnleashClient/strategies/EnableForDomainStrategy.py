@@ -6,9 +6,10 @@ class EnableForDomains(Strategy):
 
     def apply(self, context: dict = None) -> bool:
         """
-        Turn on if I'm a cat.
-
-        :return:
+        Check if feature is enabled for domain or not
+        
+        Args:
+            context(dict): domain name provided as context
         """
         default_value = False
 

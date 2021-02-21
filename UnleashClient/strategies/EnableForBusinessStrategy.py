@@ -8,9 +8,10 @@ class EnableForBusinesses(Strategy):
 
     def apply(self, context: dict = None) -> bool:
         """
-        Turn on if I'm a cat.
-
-        :return:
+        Check if feature is enabled for given business or not
+        
+        Args:
+            context(dict): business-via-name provided as context
         """
         default_value = False
 
