@@ -138,6 +138,7 @@ class FeatureToggles:
         }
         return FeatureToggles.__get_unleash_client().is_enabled(feature_name,
                                                                 context)
+
 # pylint: disable=dangerous-default-value
 class UnleashClient():
     """
