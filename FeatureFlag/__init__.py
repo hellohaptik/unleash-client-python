@@ -15,7 +15,6 @@ class FeatureFlag:
         else:
             return FeatureFlag.__instance
 
-
     @staticmethod
     def __get_unleash_client():
         """ Static access method. """
@@ -29,7 +28,6 @@ class FeatureFlag:
 
         return FeatureFlag.__client
 
-
     @staticmethod
     def set_init_params(url: str, app_name: str, redis_host: str, redis_port: int, redis_db: int):
         """ Static access method. """
@@ -38,7 +36,6 @@ class FeatureFlag:
         FeatureFlag.__redis_host = redis_host
         FeatureFlag.__redis_port = redis_port
         FeatureFlag.__redis_db = redis_db
-
 
     @staticmethod
     def is_enabled_by_domain_ids(feature_name: str, domain_ids: str):
