@@ -1,6 +1,6 @@
 from UnleashClient.strategies import Strategy
 
-class EnableForBusinesses(Strategy):
+class EnableForPartners(Strategy):
     def load_provisioning(self) -> list:
         return [
             x.strip() for x in self.parameters["partnerNames"].split(',')
