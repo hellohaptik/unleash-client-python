@@ -2,13 +2,14 @@ import redis
 import pickle
 from datetime import datetime, timezone
 from typing import Dict, Callable, Any
-import copy
-from fcache.cache import FileCache
-from apscheduler.job import Job
-from apscheduler.schedulers.background import BackgroundScheduler
-from apscheduler.triggers.interval import IntervalTrigger
-from UnleashClient.api import register_client
-from UnleashClient.periodic_tasks import fetch_and_load_features, aggregate_and_send_metrics
+# import copy
+# from fcache.cache import FileCache
+# from apscheduler.job import Job
+# from apscheduler.schedulers.background import BackgroundScheduler
+# from apscheduler.triggers.interval import IntervalTrigger
+# from UnleashClient.api import register_client
+# from UnleashClient.periodic_tasks import fetch_and_load_features, aggregate_and_send_metrics
+from UnleashClient.periodic_tasks import fetch_and_load_features
 from UnleashClient.strategies import ApplicationHostname, Default, GradualRolloutRandom, \
     GradualRolloutSessionId, GradualRolloutUserId, UserWithId, RemoteAddress, FlexibleRollout, EnableForDomains
 from UnleashClient.constants import METRIC_LAST_SENT_TIME, DISABLED_VARIATION, REDIS_HOST, REDIS_PORT, REDIS_DB
@@ -73,9 +74,9 @@ class UnleashClient():
             db=REDIS_DB
         )
         self.features = {}  # type: Dict
-        self.scheduler = BackgroundScheduler()
-        self.fl_job = None  # type: Job
-        self.metric_job = None  # type: Job
+        # self.scheduler = BackgroundScheduler()
+        # self.fl_job = None  # type: Job
+        # self.metric_job = None  # type: Job
         self.cache.set(
             METRIC_LAST_SENT_TIME,
             pickle.dumps(datetime.now(timezone.utc))
@@ -125,33 +126,33 @@ class UnleashClient():
             "strategy_mapping": self.strategy_mapping
         }
 
-        metrics_args = {
-            "url": self.unleash_url,
-            "app_name": self.unleash_app_name,
-            "instance_id": self.unleash_instance_id,
-            "custom_headers": self.unleash_custom_headers,
-            "custom_options": self.unleash_custom_options,
-            "features": self.features,
-            "ondisk_cache": self.cache
-        }
+        # metrics_args = {
+        #     "url": self.unleash_url,
+        #     "app_name": self.unleash_app_name,
+        #     "instance_id": self.unleash_instance_id,
+        #     "custom_headers": self.unleash_custom_headers,
+        #     "custom_options": self.unleash_custom_options,
+        #     "features": self.features,
+        #     "ondisk_cache": self.cache
+        # }
 
         # Register app
-        if not self.unleash_disable_registration:
-            register_client(
-                self.unleash_url, self.unleash_app_name, self.unleash_instance_id,
-                self.unleash_metrics_interval, self.unleash_custom_headers,
-                self.unleash_custom_options, self.strategy_mapping
-            )
+        # if not self.unleash_disable_registration:
+        #     register_client(
+        #         self.unleash_url, self.unleash_app_name, self.unleash_instance_id,
+        #         self.unleash_metrics_interval, self.unleash_custom_headers,
+        #         self.unleash_custom_options, self.strategy_mapping
+        #     )
 
         fetch_and_load_features(**fl_args)
 
         # Start periodic jobs
-        self.scheduler.start()
-        self.fl_job = self.scheduler.add_job(
-            fetch_and_load_features,
-            trigger=IntervalTrigger(seconds=int(self.unleash_refresh_interval)),
-            kwargs=fl_args
-        )
+        # self.scheduler.start()
+        # self.fl_job = self.scheduler.add_job(
+        #     fetch_and_load_features,
+        #     trigger=IntervalTrigger(seconds=int(self.unleash_refresh_interval)),
+        #     kwargs=fl_args
+        # )
 
         # if not self.unleash_disable_metrics:
         #     self.metric_job = self.scheduler.add_job(
@@ -170,10 +171,10 @@ class UnleashClient():
 
         :return:
         """
-        self.fl_job.remove()
-        if self.metric_job:
-            self.metric_job.remove()
-        self.scheduler.shutdown()
+        # self.fl_job.remove()
+        # if self.metric_job:
+        #     self.metric_job.remove()
+        # self.scheduler.shutdown()
         self.cache.delete()
 
     @staticmethod

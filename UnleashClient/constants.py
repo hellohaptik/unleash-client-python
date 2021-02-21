@@ -12,9 +12,9 @@ DISABLED_VARIATION = {
 }
 
 # Paths
-REGISTER_URL = "/client/register"
+# REGISTER_URL = "/client/register"
 FEATURES_URL = "/client/features"
-METRICS_URL = "/client/metrics"
+# METRICS_URL = "/client/metrics"
 
 REDIS_HOST = "127.0.0.1"
 REDIS_PORT = 6379
