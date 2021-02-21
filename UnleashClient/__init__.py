@@ -1,7 +1,7 @@
 import redis
 import pickle
 from datetime import datetime, timezone
-from typing import Dict, Callable, Any
+from typing import Dict, Callable, Any, Optional, List
 import copy
 from fcache.cache import FileCache
 from apscheduler.job import Job
@@ -11,10 +11,9 @@ from UnleashClient.api import register_client
 from UnleashClient.periodic_tasks import fetch_and_load_features, aggregate_and_send_metrics
 from UnleashClient.strategies import ApplicationHostname, Default, GradualRolloutRandom, \
     GradualRolloutSessionId, GradualRolloutUserId, UserWithId, RemoteAddress, FlexibleRollout, EnableForDomains
-from UnleashClient.constants import METRIC_LAST_SENT_TIME, DISABLED_VARIATION, REDIS_HOST, REDIS_PORT, REDIS_DB
+from UnleashClient import constants as consts
 from .utils import LOGGER
 from .deprecation_warnings import strategy_v2xx_deprecation_check, default_value_warning
-
 
 # pylint: disable=dangerous-default-value
 class UnleashClient():
@@ -34,7 +33,10 @@ class UnleashClient():
                  custom_headers: dict = {},
                  custom_options: dict = {},
                  custom_strategies: dict = {},
-                 cache_directory: str = None) -> None:
+                 cache_directory: str = None,
+                 redis_host: str,
+                 redis_port: str,
+                 redis_db: str) -> None:
         """
         A client for the Unleash feature toggle system.
 
@@ -68,16 +70,16 @@ class UnleashClient():
 
         # Class objects
         self.cache =  redis.Redis(
-            host=REDIS_HOST,
-            port=REDIS_PORT,
-            db=REDIS_DB
+            host=redis_host,
+            port=redis_port,
+            db=redis_db
         )
         self.features = {}  # type: Dict
         self.scheduler = BackgroundScheduler()
         self.fl_job = None  # type: Job
         self.metric_job = None  # type: Job
         self.cache.set(
-            METRIC_LAST_SENT_TIME,
+            consts.METRIC_LAST_SENT_TIME,
             pickle.dumps(datetime.now(timezone.utc))
         )
 
@@ -243,8 +245,8 @@ class UnleashClient():
             except Exception as excep:
                 LOGGER.warning("Returning default flag/variation for feature: %s", feature_name)
                 LOGGER.warning("Error checking feature flag variant: %s", excep)
-                return DISABLED_VARIATION
+                return consts.DISABLED_VARIATION
         else:
             LOGGER.warning("Returning default flag/variation for feature: %s", feature_name)
             LOGGER.warning("Attempted to get feature flag/variation %s, but client wasn't initialized!", feature_name)
-            return DISABLED_VARIATION
+            return consts.DISABLED_VARIATION
