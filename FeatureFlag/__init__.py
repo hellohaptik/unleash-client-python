@@ -18,9 +18,7 @@ class FeatureFlag:
     @staticmethod
     def __get_unleash_client():
         """ Static access method. """
-        if FeatureFlag.__instance is None:
-            FeatureFlag.__instance = FeatureFlag()
-
+        if FeatureFlag.__client is None:
             from UnleashClient import UnleashClient
             FeatureFlag.__client = UnleashClient(FeatureFlag.__url, FeatureFlag.__app_name, FeatureFlag.__redis_host,
                                                  FeatureFlag.__redis_port, FeatureFlag.__redis_db)
@@ -29,8 +27,11 @@ class FeatureFlag:
         return FeatureFlag.__client
 
     @staticmethod
-    def set_init_params(url: str, app_name: str, redis_host: str, redis_port: int, redis_db: int):
+    def initialize(url: str, app_name: str, redis_host: str, redis_port: int, redis_db: int):
         """ Static access method. """
+        if FeatureFlag.__instance is None:
+            FeatureFlag.__instance = FeatureFlag()
+
         FeatureFlag.__url = url
         FeatureFlag.__app_name = app_name
         FeatureFlag.__redis_host = redis_host
