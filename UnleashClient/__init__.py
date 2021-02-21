@@ -25,6 +25,9 @@ class UnleashClient():
     def __init__(self,
                  url: str,
                  app_name: str,
+                 redis_host: str,
+                 redis_port: int,
+                 redis_db: int,
                  environment: str = "default",
                  instance_id: str = "unleash-client-python",
                  refresh_interval: int = 15,
@@ -67,10 +70,10 @@ class UnleashClient():
         }
 
         # Class objects
-        self.cache =  redis.Redis(
-            host=REDIS_HOST,
-            port=REDIS_PORT,
-            db=REDIS_DB
+        self.cache = redis.Redis(
+            host=redis_host,
+            port=redis_port,
+            db=redis_db
         )
         self.features = {}  # type: Dict
         self.scheduler = BackgroundScheduler()
