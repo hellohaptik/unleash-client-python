@@ -60,31 +60,38 @@ class FeatureToggles:
 
     __url = None
     __app_name = None
+    __instance_id = None
+    __custom_strategies = {}
+
     __redis_host = None
     __redis_port = None
     __redis_db = None
 
 
     def __init__(self):
-        """ Virtually private constructor. """
+        """Initialize a class"""
         if FeatureToggles.__instance is None:
-            LOGGER.info("FeatureFlag class not initialized!")
+            print("FeatureFlag class not initialized!")
         else:
             return FeatureToggles.__instance
 
 
-    @staticmethod
-    def __get_unleash_client():
+    @classmethod
+    def __get_unleash_client(cls):
         """ Static access method. """
         if FeatureToggles.__client is None:
-            FeatureToggles.__client = UnleashClient(FeatureToggles.__url,                                               FeatureToggles.__app_name,                                          FeatureToggles.__redis_host,
+            FeatureToggles.__client = UnleashClient(FeatureToggles.__url,                                               FeatureToggles.__app_name,
+                                                    FeatureToggles.__instance_id,
+                                                    FeatureToggles.__custom_strategies,
+                                                    FeatureToggles.__redis_host,
                                                     FeatureToggles.__redis_port,FeatureToggles.__redis_db)
             FeatureToggles.__client.initialize_client()
 
         return FeatureToggles.__client
 
-    @staticmethod
-    def initialize(url: str,
+    @classmethod
+    def initialize(cls,
+                   url: str,
                    app_name: str,
                    redis_host: str,
                    redis_port: str,
@@ -98,6 +105,7 @@ class FeatureToggles:
         FeatureToggles.__redis_host = redis_host
         FeatureToggles.__redis_port = redis_port
         FeatureToggles.__redis_db = redis_db
+        FeatureToggles.__client = cls.__get_unleash_client()
 
     @staticmethod
     def is_enabled_for_domain(feature_name: str, domain_name: str):
@@ -106,8 +114,8 @@ class FeatureToggles:
         context = {
             'domainNames': domain_name
         }
-        return FeatureToggles.__get_unleash_client().is_enabled(feature_name,
-                                                                context)
+        return FeatureToggles.__client.is_enabled(feature_name,
+                                                  context)
 
     @staticmethod
     def is_enabled_for_business(feature_name: str, business_via_name: str):
@@ -116,8 +124,8 @@ class FeatureToggles:
         context = {
             'businessViaNames': business_via_name
         }
-        return FeatureToggles.__get_unleash_client().is_enabled(feature_name,
-                                                                context)
+        return FeatureToggles.__client.is_enabled(feature_name,
+                                                  context)
 
     @staticmethod
     def is_enabled_for_partner(feature_name: str, partner_name: str):
@@ -126,8 +134,8 @@ class FeatureToggles:
         context = {
             'partnerNames': partner_name
         }
-        return FeatureToggles.__get_unleash_client().is_enabled(feature_name,
-                                                                context)
+        return FeatureToggles.__client.is_enabled(feature_name,
+                                                  context)
 
     @staticmethod
     def is_enabled_for_expert(feature_name: str, expert_email: str):
@@ -136,8 +144,8 @@ class FeatureToggles:
         context = {
             'expertEmails': expert_email
         }
-        return FeatureToggles.__get_unleash_client().is_enabled(feature_name,
-                                                                context)
+        return FeatureToggles.__client.is_enabled(feature_name,
+                                                  context)
 
 # pylint: disable=dangerous-default-value
 class UnleashClient():
