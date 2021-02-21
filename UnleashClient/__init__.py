@@ -15,6 +15,129 @@ from UnleashClient import constants as consts
 from .utils import LOGGER
 from .deprecation_warnings import strategy_v2xx_deprecation_check, default_value_warning
 
+
+class FeatureTogglesFromConst:
+    def __init__(self):
+        self.feature_toggles_dict = consts.FEATURE_TOGGLES_API_RESPONSE
+
+    def is_enabled(self, feature_name, app_context: Optional[Dict] = {}) -> bool:
+        """
+        Check if certain feature is enabled in const
+
+        Args:
+            feature_name(str): Name of the feature
+            app_context(dict): App context to check when certain feature is enabled for given entity
+                eg: {
+                    "partner_names": "<partner_names>"
+                }
+
+        Returns(bool): True if feature is enabled else False
+        """
+        is_feature_enabled = feature_name in self.feature_toggles_dict
+
+        if not is_feature_enabled:  # If Feature is not enabled then return is_feature_enabled Value
+            return is_feature_enabled
+
+        if not app_context:  # If there's not any app_context then return is_feature_enabled value
+            return is_feature_enabled
+
+        app_context_parameter_key = list(app_context.keys())[0]
+        app_context_parameter_value = list(app_context.values())[0]
+
+        feature_data = self.feature_toggles_dict[feature_name]
+        return app_context_parameter_value in feature_data.get(app_context_parameter_key, [])
+
+    def fetch_feature_toggles(self) -> Dict[str, Any]:
+        """
+        Return Feature toggles from const
+        """
+        return self.feature_toggles_dict
+
+
+class FeatureToggles:
+    __instance = None
+    __client = None
+
+    __url = None
+    __app_name = None
+    __redis_host = None
+    __redis_port = None
+    __redis_db = None
+
+
+    def __init__(self):
+        """ Virtually private constructor. """
+        if FeatureToggles.__instance is None:
+            LOGGER.info("FeatureFlag class not initialized!")
+        else:
+            return FeatureToggles.__instance
+
+
+    @staticmethod
+    def __get_unleash_client():
+        """ Static access method. """
+        if FeatureToggles.__client is None:
+            FeatureToggles.__client = UnleashClient(FeatureToggles.__url,                                               FeatureToggles.__app_name,                                          FeatureToggles.__redis_host,
+                                                    FeatureToggles.__redis_port,FeatureToggles.__redis_db)
+            FeatureToggles.__client.initialize_client()
+
+        return FeatureToggles.__client
+
+    @staticmethod
+    def initialize(url: str,
+                   app_name: str,
+                   redis_host: str,
+                   redis_port: str,
+                   redis_db: str):
+        """ Static access method. """
+        if FeatureToggles.__instance is None:
+            FeatureToggles.__instance = FeatureToggles()
+
+        FeatureToggles.__url = url
+        FeatureToggles.__app_name = app_name
+        FeatureToggles.__redis_host = redis_host
+        FeatureToggles.__redis_port = redis_port
+        FeatureToggles.__redis_db = redis_db
+
+    @staticmethod
+    def is_enabled_for_domain(feature_name: str, domain_name: str):
+        """ Static access method. """
+
+        context = {
+            'domainNames': domain_name
+        }
+        return FeatureToggles.__get_unleash_client().is_enabled(feature_name,
+                                                                context)
+
+    @staticmethod
+    def is_enabled_for_business(feature_name: str, business_via_name: str):
+        """ Static access method. """
+
+        context = {
+            'businessViaNames': business_via_name
+        }
+        return FeatureToggles.__get_unleash_client().is_enabled(feature_name,
+                                                                context)
+
+    @staticmethod
+    def is_enabled_for_partner(feature_name: str, partner_name: str):
+        """ Static access method. """
+
+        context = {
+            'partnerNames': partner_name
+        }
+        return FeatureToggles.__get_unleash_client().is_enabled(feature_name,
+                                                                context)
+
+    @staticmethod
+    def is_enabled_for_expert(feature_name: str, expert_email: str):
+        """ Static access method. """
+
+        context = {
+            'expertEmails': expert_email
+        }
+        return FeatureToggles.__get_unleash_client().is_enabled(feature_name,
+                                                                context)
 # pylint: disable=dangerous-default-value
 class UnleashClient():
     """
@@ -24,6 +147,9 @@ class UnleashClient():
     def __init__(self,
                  url: str,
                  app_name: str,
+                 redis_host: str,
+                 redis_port: str,
+                 redis_db: str,
                  environment: str = "default",
                  instance_id: str = "unleash-client-python",
                  refresh_interval: int = 15,
@@ -33,10 +159,7 @@ class UnleashClient():
                  custom_headers: dict = {},
                  custom_options: dict = {},
                  custom_strategies: dict = {},
-                 cache_directory: str = None,
-                 redis_host: str,
-                 redis_port: str,
-                 redis_db: str) -> None:
+                 cache_directory: str = None) -> None:
         """
         A client for the Unleash feature toggle system.
 
