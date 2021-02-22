@@ -75,13 +75,13 @@ class UnleashClient():
             db=redis_db
         )
         self.features = {}  # type: Dict
-        self.scheduler = BackgroundScheduler()
+        #self.scheduler = BackgroundScheduler()
         self.fl_job = None  # type: Job
         self.metric_job = None  # type: Job
-        self.cache.set(
-            consts.METRIC_LAST_SENT_TIME,
-            pickle.dumps(datetime.now(timezone.utc))
-        )
+        #self.cache.set(
+        #    consts.METRIC_LAST_SENT_TIME,
+        #    pickle.dumps(datetime.now(timezone.utc))
+        #)
 
         # Mappings
         default_strategy_mapping = {
@@ -116,27 +116,27 @@ class UnleashClient():
         :return:
         """
         # Setup
-        fl_args = {
-            "url": self.unleash_url,
-            "app_name": self.unleash_app_name,
-            "instance_id": self.unleash_instance_id,
-            "custom_headers": self.unleash_custom_headers,
-            "custom_options": self.unleash_custom_options,
-            "cache": self.cache,
-            "features": self.features,
-            "strategy_mapping": self.strategy_mapping
-        }
-
-        metrics_args = {
-            "url": self.unleash_url,
-            "app_name": self.unleash_app_name,
-            "instance_id": self.unleash_instance_id,
-            "custom_headers": self.unleash_custom_headers,
-            "custom_options": self.unleash_custom_options,
-            "features": self.features,
-            "ondisk_cache": self.cache
-        }
-
+        #fl_args = {
+        #    "url": self.unleash_url,
+        #    "app_name": self.unleash_app_name,
+        #    "instance_id": self.unleash_instance_id,
+        #    "custom_headers": self.unleash_custom_headers,
+        #    "custom_options": self.unleash_custom_options,
+        #    "cache": self.cache,
+        #    "features": self.features,
+        #    "strategy_mapping": self.strategy_mapping
+        #}
+#
+        #metrics_args = {
+        #    "url": self.unleash_url,
+        #    "app_name": self.unleash_app_name,
+        #    "instance_id": self.unleash_instance_id,
+        #    "custom_headers": self.unleash_custom_headers,
+        #    "custom_options": self.unleash_custom_options,
+        #    "features": self.features,
+        #    "ondisk_cache": self.cache
+        #}
+#
         # Register app
         if not self.unleash_disable_registration:
             register_client(
@@ -145,15 +145,15 @@ class UnleashClient():
                 self.unleash_custom_options, self.strategy_mapping
             )
 
-        fetch_and_load_features(**fl_args)
+        #fetch_and_load_features(**fl_args)
 
         # Start periodic jobs
-        self.scheduler.start()
-        self.fl_job = self.scheduler.add_job(
-            fetch_and_load_features,
-            trigger=IntervalTrigger(seconds=int(self.unleash_refresh_interval)),
-            kwargs=fl_args
-        )
+        #self.scheduler.start()
+        #self.fl_job = self.scheduler.add_job(
+        #    fetch_and_load_features,
+        #    trigger=IntervalTrigger(seconds=int#(self.unleash_refresh_interval)),
+        #    kwargs=fl_args
+        #)
 
         # if not self.unleash_disable_metrics:
         #     self.metric_job = self.scheduler.add_job(
