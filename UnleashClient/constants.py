@@ -15,3 +15,26 @@ DISABLED_VARIATION = {
 REGISTER_URL = "/client/register"
 FEATURES_URL = "/client/features"
 METRICS_URL = "/client/metrics"
+
+FEATURE_TOGGLES_API_RESPONSE = {
+    "haptik.development.enable_smart_skills": {
+        "domain_names": ["test_pvz_superman", "priyanshisupermandefault"],
+        "business_via_names": ["testpvzsupermanchannel", "priyanshisupermandefaultchannel"],
+        "partner_names": ["Platform Demo"]
+    },
+    "prestaging.staging.enable_smart_skills": {
+        "domain_names": ["test_pvz_superman", "priyanshisupermandefault"],
+        "business_via_names": ["testpvzsupermanchannel", "priyanshisupermandefaultchannel"],
+        "partner_names": ["Platform Demo"]
+    },
+    "haptik.staging.enable_smart_skills": {
+        "domain_names": ["test_pvz_superman", "priyanshisupermandefault"],
+        "business_via_names": ["testpvzsupermanchannel", "priyanshisupermandefaultchannel"],
+        "partner_names": ["Platform Demo"]
+    },
+    "haptik.production.enable_smart_skills": {
+        "domain_names": ["test_pvz_superman", "priyanshisupermandefault"],
+        "business_via_names": ["testpvzsupermanchannel", "priyanshisupermandefaultchannel"],
+        "partner_names": ["Platform Demo"]
+    }
+}
