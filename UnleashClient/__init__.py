@@ -56,7 +56,7 @@ class FeatureTogglesFromConst:
                                partner_name: Optional[str] = ''):
         context = {}
         if partner_name:
-            context['partnerNames'] = partner_name
+            context['partner_names'] = partner_name
 
         return FeatureTogglesFromConst().is_enabled(feature_name, context)
 
@@ -65,7 +65,7 @@ class FeatureTogglesFromConst:
                               expert_email: Optional[str] = ''):
         context = {}
         if expert_email:
-            context['expertEmails'] = expert_email
+            context['expert_emails'] = expert_email
 
         return FeatureTogglesFromConst().is_enabled(feature_name, context)
 
