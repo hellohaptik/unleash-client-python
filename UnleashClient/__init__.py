@@ -12,34 +12,13 @@ from UnleashClient.periodic_tasks import fetch_and_load_features, aggregate_and_
 from UnleashClient.strategies import ApplicationHostname, Default, GradualRolloutRandom, \
     GradualRolloutSessionId, GradualRolloutUserId, UserWithId, RemoteAddress, FlexibleRollout, EnableForDomains
 from UnleashClient import constants as consts
-from .utils import LOGGER
-from .deprecation_warnings import strategy_v2xx_deprecation_check, default_value_warning
+from UnleashClient.utils import LOGGER
+from UnleashClient.deprecation_warnings import strategy_v2xx_deprecation_check, default_value_warning
 
 
 class FeatureTogglesFromConst:
     def __init__(self):
-        self.feature_toggles_dict = {
-            "haptik.development.enable_smart_skills": {
-                "domain_names": ["test_pvz_superman", "priyanshisupermandefault"],
-                "business_via_names": ["testpvzsupermanchannel", "priyanshisupermandefaultchannel"],
-                "partner_names": ["Platform Demo"]
-            },
-            "prestaging.staging.enable_smart_skills": {
-                "domain_names": ["test_pvz_superman", "priyanshisupermandefault"],
-                "business_via_names": ["testpvzsupermanchannel", "priyanshisupermandefaultchannel"],
-                "partner_names": ["Platform Demo"]
-            },
-            "haptik.staging.enable_smart_skills": {
-                "domain_names": ["test_pvz_superman", "priyanshisupermandefault"],
-                "business_via_names": ["testpvzsupermanchannel", "priyanshisupermandefaultchannel"],
-                "partner_names": ["Platform Demo"]
-            },
-            "haptik.production.enable_smart_skills": {
-                "domain_names": ["test_pvz_superman", "priyanshisupermandefault"],
-                "business_via_names": ["testpvzsupermanchannel", "priyanshisupermandefaultchannel"],
-                "partner_names": ["Platform Demo"]
-            }
-        }
+        self.feature_toggles_dict = consts.FEATURE_TOGGLES_API_RESPONSE
 
     def is_enabled(self, feature_name,
                    app_context: Optional[Dict] = {}) -> bool:
@@ -119,7 +98,7 @@ class FeatureToggles:
     __redis_host = None
     __redis_port = None
     __redis_db = None
-    __is_unleash_available = False
+    __is_unleash_available = True
 
     def __init__(self):
         """Initialize a class"""
@@ -133,14 +112,15 @@ class FeatureToggles:
     @staticmethod
     def get_unleash_client():
         """ Static access method. """
-        if FeatureToggles.client is None:
-            FeatureToggles.client = UnleashClient(
-                FeatureToggles.__url,                                      FeatureToggles.__app_name,
-                FeatureToggles.__instance_id,
-                FeatureToggles.__redis_host,
-                FeatureToggles.__redis_port,
-                FeatureToggles.__redis_db,
-                FeatureToggles.__custom_strategies
+        if FeatureToggles.__client is None:
+            print('initializing again and again')
+            FeatureToggles.__client = UnleashClient(
+                url=FeatureToggles.__url,                                      app_name=FeatureToggles.__app_name,
+                instance_id=FeatureToggles.__instance_id,
+                redis_host=FeatureToggles.__redis_host,
+                redis_port=FeatureToggles.__redis_port,
+                redis_db=FeatureToggles.__redis_db,
+                custom_strategies=FeatureToggles.__custom_strategies
             )
             FeatureToggles.__client.initialize_client()
 
@@ -155,7 +135,7 @@ class FeatureToggles:
                    redis_db: str,
                    custom_strategies: Optional[Dict] = {},):
         """ Static access method. """
-        if __is_unleash_available:
+        if FeatureToggles.__is_unleash_available:
             FeatureToggles.__url = url
             FeatureToggles.__app_name = app_name
             FeatureToggles.__redis_host = redis_host
@@ -175,6 +155,9 @@ class UnleashClient():
     def __init__(self,
                  url: str,
                  app_name: str,
+                 redis_host: str,
+                 redis_port: str,
+                 redis_db: str,
                  environment: str = "default",
                  instance_id: str = "unleash-client-python",
                  refresh_interval: int = 15,
@@ -184,10 +167,7 @@ class UnleashClient():
                  custom_headers: dict = {},
                  custom_options: dict = {},
                  custom_strategies: dict = {},
-                 cache_directory: str = None,
-                 redis_host: str,
-                 redis_port: str,
-                 redis_db: str) -> None:
+                 cache_directory: str = None) -> None:
         """
         A client for the Unleash feature toggle system.
 
@@ -267,16 +247,16 @@ class UnleashClient():
         :return:
         """
         # Setup
-        #fl_args = {
-        #    "url": self.unleash_url,
-        #    "app_name": self.unleash_app_name,
-        #    "instance_id": self.unleash_instance_id,
-        #    "custom_headers": self.unleash_custom_headers,
-        #    "custom_options": self.unleash_custom_options,
-        #    "cache": self.cache,
-        #    "features": self.features,
-        #    "strategy_mapping": self.strategy_mapping
-        #}
+        fl_args = {
+            "url": self.unleash_url,
+            "app_name": self.unleash_app_name,
+            "instance_id": self.unleash_instance_id,
+            "custom_headers": self.unleash_custom_headers,
+            "custom_options": self.unleash_custom_options,
+            "cache": self.cache,
+            "features": self.features,
+            "strategy_mapping": self.strategy_mapping
+        }
 #
         #metrics_args = {
         #    "url": self.unleash_url,
@@ -296,7 +276,7 @@ class UnleashClient():
                 self.unleash_custom_options, self.strategy_mapping
             )
 
-        #fetch_and_load_features(**fl_args)
+        fetch_and_load_features(**fl_args)
 
         # Start periodic jobs
         #self.scheduler.start()
