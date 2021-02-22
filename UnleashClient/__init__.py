@@ -15,9 +15,31 @@ from UnleashClient import constants as consts
 from .utils import LOGGER
 from .deprecation_warnings import strategy_v2xx_deprecation_check, default_value_warning
 
+
 class FeatureTogglesFromConst:
     def __init__(self):
-        self.feature_toggles_dict = consts.FEATURE_TOGGLES_API_RESPONSE
+        self.feature_toggles_dict = {
+            "haptik.development.enable_smart_skills": {
+                "domain_names": ["test_pvz_superman", "priyanshisupermandefault"],
+                "business_via_names": ["testpvzsupermanchannel", "priyanshisupermandefaultchannel"],
+                "partner_names": ["Platform Demo"]
+            },
+            "prestaging.staging.enable_smart_skills": {
+                "domain_names": ["test_pvz_superman", "priyanshisupermandefault"],
+                "business_via_names": ["testpvzsupermanchannel", "priyanshisupermandefaultchannel"],
+                "partner_names": ["Platform Demo"]
+            },
+            "haptik.staging.enable_smart_skills": {
+                "domain_names": ["test_pvz_superman", "priyanshisupermandefault"],
+                "business_via_names": ["testpvzsupermanchannel", "priyanshisupermandefaultchannel"],
+                "partner_names": ["Platform Demo"]
+            },
+            "haptik.production.enable_smart_skills": {
+                "domain_names": ["test_pvz_superman", "priyanshisupermandefault"],
+                "business_via_names": ["testpvzsupermanchannel", "priyanshisupermandefaultchannel"],
+                "partner_names": ["Platform Demo"]
+            }
+        }
 
     def is_enabled(self, feature_name,
                    app_context: Optional[Dict] = {}) -> bool:
@@ -86,6 +108,62 @@ class FeatureTogglesFromConst:
             context['domain_names'] = domain_name
 
         return FeatureTogglesFromConst().is_enabled(feature_name, context)
+
+
+class FeatureToggles:
+    __client = None
+    __url = None
+    __app_name = None
+    __instance_id = None
+    __custom_strategies = {}
+    __redis_host = None
+    __redis_port = None
+    __redis_db = None
+    __is_unleash_available = False
+
+    def __init__(self):
+        """Initialize a class"""
+        if FeatureToggles.__client is None:
+            print(
+                "FeatureFlag class not initialized!, Initializing the Unleash Client"
+            )
+        else:
+            return FeatureToggles.__client
+
+    @staticmethod
+    def get_unleash_client():
+        """ Static access method. """
+        if FeatureToggles.client is None:
+            FeatureToggles.client = UnleashClient(
+                FeatureToggles.__url,                                      FeatureToggles.__app_name,
+                FeatureToggles.__instance_id,
+                FeatureToggles.__redis_host,
+                FeatureToggles.__redis_port,
+                FeatureToggles.__redis_db,
+                FeatureToggles.__custom_strategies
+            )
+            FeatureToggles.__client.initialize_client()
+
+        return FeatureToggles.__client
+
+    @staticmethod
+    def initialize(url: str,
+                   app_name: str,
+                   instance_id: str,
+                   redis_host: str,
+                   redis_port: str,
+                   redis_db: str,
+                   custom_strategies: Optional[Dict] = {},):
+        """ Static access method. """
+        if __is_unleash_available:
+            FeatureToggles.__url = url
+            FeatureToggles.__app_name = app_name
+            FeatureToggles.__redis_host = redis_host
+            FeatureToggles.__redis_port = redis_port
+            FeatureToggles.__redis_db = redis_db
+            FeatureToggles.__instance_id = instance_id
+        else:
+            FeatureToggles.__client = FeatureTogglesFromConst()
 
 
 # pylint: disable=dangerous-default-value
@@ -323,3 +401,35 @@ class UnleashClient():
             LOGGER.warning("Returning default flag/variation for feature: %s", feature_name)
             LOGGER.warning("Attempted to get feature flag/variation %s, but client wasn't initialized!", feature_name)
             return consts.DISABLED_VARIATION
+
+    def is_enabled_for_domain(self, feature_name: str,
+                              domain_name: Optional[str] = ''):
+        """ Static access method. """
+        context = {}
+        if domain_name:
+            context['domain_names'] = domain_name
+
+        return self.is_enabled(feature_name, context)
+
+    def is_enabled_for_business(self, feature_name: str,
+                                business_via_name: Optional[str] = ''):
+        context = {}
+        if business_via_name:
+            context['business_via_names'] = business_via_name
+
+        return self.is_enabled(feature_name, context)
+
+    def is_enabled_for_partner(self, feature_name: str,
+                               partner_name: Optional[str]=''):
+        if partner_name:
+            context['partner_names'] = partner_name
+
+        return self.is_enabled(feature_name, context)
+
+    def is_enabled_for_expert(self, feature_name: str,
+                              expert_email: Optional[str] = ''):
+        context = {}
+        if expert_email:
+            context['expert_emails'] = expert_email
+
+        return self.is_enabled(feature_name, context)
