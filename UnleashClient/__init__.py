@@ -20,6 +20,7 @@ class FeatureTogglesFromConst:
     def __init__(self):
         self.feature_toggles_dict = consts.FEATURE_TOGGLES_API_RESPONSE
 
+    @classmethod
     def is_enabled(self, feature_name, app_context: Optional[Dict] = {}) -> bool:
         """
         Check if certain feature is enabled in const
@@ -52,6 +53,24 @@ class FeatureTogglesFromConst:
         Return Feature toggles from const
         """
         return self.feature_toggles_dict
+
+    @staticmethod
+    def is_enabled_for_partner(feature_name: str,
+                               partner_name: Optional[str] = ''):
+        context = {}
+        if partner_name:
+            context['partnerNames'] = partner_name
+
+        return FeatureTogglesFromConst().is_enabled(feature_name, context)
+
+    @staticmethod
+    def is_enabled_for_expert(feature_name: str,
+                              expert_email: Optional[str] = ''):
+        context = {}
+        if expert_email:
+            context['expertEmails'] = expert_email
+
+        return FeatureTogglesFromConst().is_enabled(feature_name, context)
 
 
 class FeatureToggles:
@@ -93,57 +112,63 @@ class FeatureToggles:
     def initialize(cls,
                    url: str,
                    app_name: str,
+                   isstance_id: str,
                    redis_host: str,
                    redis_port: str,
-                   redis_db: str):
+                   redis_db: str,
+                   custom_strategies: Optional[Dict] = {},):
         """ Static access method. """
-        if FeatureToggles.__instance is None:
-            FeatureToggles.__instance = FeatureToggles()
+        is_unleash_available = True if consts.FEATURE_TOGGLES_ENABLED else False
+        if is_unleash_available:
+            if FeatureToggles.__instance is None:
+                FeatureToggles.__instance = FeatureToggles()
 
-        FeatureToggles.__url = url
-        FeatureToggles.__app_name = app_name
-        FeatureToggles.__redis_host = redis_host
-        FeatureToggles.__redis_port = redis_port
-        FeatureToggles.__redis_db = redis_db
-        FeatureToggles.__client = cls.__get_unleash_client()
+            FeatureToggles.__url = url
+            FeatureToggles.__app_name = app_name
+            FeatureToggles.__redis_host = redis_host
+            FeatureToggles.__redis_port = redis_port
+            FeatureToggles.__redis_db = redis_db
+            FeatureToggles.__client = cls.__get_unleash_client()
+        else:
+            FeatureToggles.__client = FeatureTogglesFromConst()
 
     @staticmethod
-    def is_enabled_for_domain(feature_name: str, domain_name: str):
+    def is_enabled_for_domain(feature_name: str,
+                              domain_name: Optional[str] = ''):
         """ Static access method. """
+        context = {}
+        if domain_name:
+            context['domainNames'] = domain_name
 
-        context = {
-            'domainNames': domain_name
-        }
         return FeatureToggles.__client.is_enabled(feature_name,
                                                   context)
 
     @staticmethod
-    def is_enabled_for_business(feature_name: str, business_via_name: str):
-        """ Static access method. """
+    def is_enabled_for_business(feature_name: str,
+                                business_via_name: Optional[str] = ''):
+        context = {}
+        if business_via_name:
+            context['businessViaNames'] = business_via_name
 
-        context = {
-            'businessViaNames': business_via_name
-        }
         return FeatureToggles.__client.is_enabled(feature_name,
                                                   context)
 
     @staticmethod
-    def is_enabled_for_partner(feature_name: str, partner_name: str):
-        """ Static access method. """
+    def is_enabled_for_partner(feature_name: str,
+                               partner_name: Optional[str]=''):
+        if partner_name:
+            context['partner_name'] = partner_name
 
-        context = {
-            'partnerNames': partner_name
-        }
         return FeatureToggles.__client.is_enabled(feature_name,
                                                   context)
 
     @staticmethod
-    def is_enabled_for_expert(feature_name: str, expert_email: str):
-        """ Static access method. """
+    def is_enabled_for_expert(feature_name: str,
+                              expert_email: Optional[str] = ''):
+        context = {}
+        if expert_email:
+            context['expertEmails'] = expert_email
 
-        context = {
-            'expertEmails': expert_email
-        }
         return FeatureToggles.__client.is_enabled(feature_name,
                                                   context)
 
