@@ -69,6 +69,25 @@ class FeatureTogglesFromConst:
 
         return FeatureTogglesFromConst().is_enabled(feature_name, context)
 
+    @staticmethod
+    def is_enabled_for_business(feature_name: str,
+                                business_via_name: Optional[str] = ''):
+        context = {}
+        if business_via_name:
+            context['business_via_names'] = business_via_name
+
+        return FeatureTogglesFromConst().is_enabled(feature_name, context)
+
+    @staticmethod
+    def is_enabled_for_domain(feature_name: str,
+                              domain_name: Optional[str] = ''):
+        context = {}
+        if domain_name:
+            context['domain_names'] = domain_name
+
+        return FeatureTogglesFromConst().is_enabled(feature_name, context)
+
+
 # pylint: disable=dangerous-default-value
 class UnleashClient():
     """
