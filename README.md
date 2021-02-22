@@ -6,10 +6,12 @@
 
 url -> Get from ENV variable
 app_name -> Get from ENV variable
+environment -> Get from ENV variable
+cas_name -> Get from ENV variable
 redis_host -> Get from ENV variable
 redis_port -> Get from ENV variable
 redis_db -> Get from ENV variable
-FeatureFlag.initialize(url, app_name, redis_host, redis_port, redis_db)
+FeatureFlag.initialize(url, app_name, environment, cas_name, redis_host, redis_port, redis_db)
 
 ## Haptik Usage
 FeatureFlag.is_enabled_by_domain_ids({feature-name}, {comma-separated-domain-ids})
