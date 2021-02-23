@@ -1,16 +1,14 @@
 import redis
-import pickle
-from datetime import datetime, timezone
-from typing import Dict, Callable, Any, Optional, List
-import copy
-from fcache.cache import FileCache
-from apscheduler.job import Job
-from apscheduler.schedulers.background import BackgroundScheduler
-from apscheduler.triggers.interval import IntervalTrigger
+
+from typing import Dict, Callable, Any, Optional
+
 from UnleashClient.api import register_client
-from UnleashClient.periodic_tasks import fetch_and_load_features, aggregate_and_send_metrics
-from UnleashClient.strategies import ApplicationHostname, Default, GradualRolloutRandom, \
-    GradualRolloutSessionId, GradualRolloutUserId, UserWithId, RemoteAddress, FlexibleRollout, EnableForDomains
+from UnleashClient.periodic_tasks import fetch_and_load_features
+from UnleashClient.strategies import (
+    ApplicationHostname, Default, GradualRolloutRandom,
+    GradualRolloutSessionId, GradualRolloutUserId, UserWithId,
+    RemoteAddress, FlexibleRollout, EnableForDomains
+)
 from UnleashClient import constants as consts
 from UnleashClient.utils import LOGGER
 from UnleashClient.deprecation_warnings import strategy_v2xx_deprecation_check, default_value_warning
@@ -34,7 +32,8 @@ class FeatureTogglesFromConst:
         """
         is_feature_enabled = feature_name in self.feature_toggles_dict
 
-        if not is_feature_enabled:  # If Feature is not enabled then return is_feature_enabled Value
+        # If Feature is not enabled then return is_feature_enabled Value
+        if not is_feature_enabled:
             return is_feature_enabled
 
         if not app_context:  # If there's not any app_context then return is_feature_enabled value
@@ -115,7 +114,8 @@ class FeatureToggles:
         if FeatureToggles.__client is None:
             print('initializing again and again')
             FeatureToggles.__client = UnleashClient(
-                url=FeatureToggles.__url,                                      app_name=FeatureToggles.__app_name,
+                url=FeatureToggles.__url,
+                app_name=FeatureToggles.__app_name,
                 instance_id=FeatureToggles.__instance_id,
                 redis_host=FeatureToggles.__redis_host,
                 redis_port=FeatureToggles.__redis_port,
@@ -155,10 +155,11 @@ class UnleashClient():
     def __init__(self,
                  url: str,
                  app_name: str,
+                 environment: str,
+                 cas_name: str,
                  redis_host: str,
                  redis_port: str,
                  redis_db: str,
-                 environment: str = "default",
                  instance_id: str = "unleash-client-python",
                  refresh_interval: int = 15,
                  metrics_interval: int = 60,
@@ -200,19 +201,12 @@ class UnleashClient():
         }
 
         # Class objects
-        self.cache =  redis.Redis(
+        self.cache = redis.Redis(
             host=redis_host,
             port=redis_port,
             db=redis_db
         )
         self.features = {}  # type: Dict
-        #self.scheduler = BackgroundScheduler()
-        self.fl_job = None  # type: Job
-        self.metric_job = None  # type: Job
-        #self.cache.set(
-        #    consts.METRIC_LAST_SENT_TIME,
-        #    pickle.dumps(datetime.now(timezone.utc))
-        #)
 
         # Mappings
         default_strategy_mapping = {
@@ -257,17 +251,6 @@ class UnleashClient():
             "features": self.features,
             "strategy_mapping": self.strategy_mapping
         }
-#
-        #metrics_args = {
-        #    "url": self.unleash_url,
-        #    "app_name": self.unleash_app_name,
-        #    "instance_id": self.unleash_instance_id,
-        #    "custom_headers": self.unleash_custom_headers,
-        #    "custom_options": self.unleash_custom_options,
-        #    "features": self.features,
-        #    "ondisk_cache": self.cache
-        #}
-#
         # Register app
         if not self.unleash_disable_registration:
             register_client(
@@ -277,21 +260,6 @@ class UnleashClient():
             )
 
         fetch_and_load_features(**fl_args)
-
-        # Start periodic jobs
-        #self.scheduler.start()
-        #self.fl_job = self.scheduler.add_job(
-        #    fetch_and_load_features,
-        #    trigger=IntervalTrigger(seconds=int#(self.unleash_refresh_interval)),
-        #    kwargs=fl_args
-        #)
-
-        # if not self.unleash_disable_metrics:
-        #     self.metric_job = self.scheduler.add_job(
-        #         aggregate_and_send_metrics,
-        #         trigger=IntervalTrigger(seconds=int#( self.unleash_metrics_interval)),
-        #         kwargs=metrics_args
-        #     )
 
         self.is_initialized = True
 
@@ -303,10 +271,6 @@ class UnleashClient():
 
         :return:
         """
-        self.fl_job.remove()
-        if self.metric_job:
-            self.metric_job.remove()
-        self.scheduler.shutdown()
         self.cache.delete()
 
     @staticmethod
@@ -352,7 +316,6 @@ class UnleashClient():
             LOGGER.warning("Returning default value for feature: %s", feature_name)
             LOGGER.warning("Attempted to get feature_flag %s, but client wasn't initialized!", feature_name)
             return self._get_fallback_value(fallback_function, feature_name, context)
-
 
     # pylint: disable=broad-except
     def get_variant(self,
@@ -400,7 +363,8 @@ class UnleashClient():
         return self.is_enabled(feature_name, context)
 
     def is_enabled_for_partner(self, feature_name: str,
-                               partner_name: Optional[str]=''):
+                               partner_name: Optional[str] = ''):
+        context = {}
         if partner_name:
             context['partner_names'] = partner_name
 
