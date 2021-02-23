@@ -24,7 +24,11 @@ class UnleashClient():
     def __init__(self,
                  url: str,
                  app_name: str,
-                 environment: str = "default",
+                 environment: str,
+                 cas_name: str,
+                 redis_host: str,
+                 redis_port: str,
+                 redis_db: str,
                  instance_id: str = "unleash-client-python",
                  refresh_interval: int = 15,
                  metrics_interval: int = 60,
@@ -33,10 +37,7 @@ class UnleashClient():
                  custom_headers: dict = {},
                  custom_options: dict = {},
                  custom_strategies: dict = {},
-                 cache_directory: str = None,
-                 redis_host: str,
-                 redis_port: str,
-                 redis_db: str) -> None:
+                 cache_directory: str = None) -> None:
         """
         A client for the Unleash feature toggle system.
 
@@ -145,7 +146,7 @@ class UnleashClient():
                 self.unleash_custom_options, self.strategy_mapping
             )
 
-        #fetch_and_load_features(**fl_args)
+        fetch_and_load_features(**fl_args)
 
         # Start periodic jobs
         #self.scheduler.start()
