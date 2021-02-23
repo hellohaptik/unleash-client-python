@@ -1,15 +1,92 @@
 import redis
 
-from typing import Dict, Callable, Any, Optional, List
+from typing import Dict, Callable, Any, Optional
 
 from UnleashClient.api import register_client
 from UnleashClient.periodic_tasks import fetch_and_load_features
 from UnleashClient.strategies import (
     ApplicationHostname, Default, GradualRolloutRandom,
-    GradualRolloutSessionId, GradualRolloutUserId, UserWithId,RemoteAddress, FlexibleRollout, EnableForDomains)
+    GradualRolloutSessionId, GradualRolloutUserId, UserWithId,
+    RemoteAddress, FlexibleRollout, EnableForDomains
+)
 from UnleashClient import constants as consts
 from UnleashClient.utils import LOGGER
 from UnleashClient.deprecation_warnings import strategy_v2xx_deprecation_check, default_value_warning
+
+
+class FeatureTogglesFromConst:
+    def __init__(self):
+        self.feature_toggles_dict = consts.FEATURE_TOGGLES_API_RESPONSE
+
+    def is_enabled(self, feature_name,
+                   app_context: Optional[Dict] = {}) -> bool:
+        """
+        Check if certain feature is enabled in const
+        Args:
+            feature_name(str): Name of the feature
+            app_context(dict): App context to check when certain feature is enabled for given entity
+                eg: {
+                    "partner_names": "<partner_names>"
+                }
+        Returns(bool): True if feature is enabled else False
+        """
+        is_feature_enabled = feature_name in self.feature_toggles_dict
+
+        # If Feature is not enabled then return is_feature_enabled Value
+        if not is_feature_enabled:
+            return is_feature_enabled
+
+        if not app_context:  # If there's not any app_context then return is_feature_enabled value
+            return is_feature_enabled
+
+        app_context_parameter_key = list(app_context.keys())[0]
+        app_context_parameter_value = list(app_context.values())[0]
+
+        feature_data = self.feature_toggles_dict[feature_name]
+        return app_context_parameter_value in feature_data.get(app_context_parameter_key, [])
+
+    def fetch_feature_toggles(self) -> Dict[str, Any]:
+        """
+        Return Feature toggles from const
+        """
+        return self.feature_toggles_dict
+
+    @staticmethod
+    def is_enabled_for_partner(feature_name: str,
+                               partner_name: Optional[str] = ''):
+        context = {}
+        if partner_name:
+            context['partner_names'] = partner_name
+
+        return FeatureTogglesFromConst().is_enabled(feature_name, context)
+
+    @staticmethod
+    def is_enabled_for_expert(feature_name: str,
+                              expert_email: Optional[str] = ''):
+        context = {}
+        if expert_email:
+            context['expert_emails'] = expert_email
+
+        return FeatureTogglesFromConst().is_enabled(feature_name, context)
+
+    @staticmethod
+    def is_enabled_for_business(feature_name: str,
+                                business_via_name: Optional[str] = ''):
+        context = {}
+        if business_via_name:
+            context['business_via_names'] = business_via_name
+
+        return FeatureTogglesFromConst().is_enabled(feature_name, context)
+
+    @staticmethod
+    def is_enabled_for_domain(feature_name: str,
+                              domain_name: Optional[str] = ''):
+        context = {}
+        if domain_name:
+            context['domain_names'] = domain_name
+
+        return FeatureTogglesFromConst().is_enabled(feature_name, context)
+
 
 # pylint: disable=dangerous-default-value
 class UnleashClient():
@@ -66,7 +143,7 @@ class UnleashClient():
         }
 
         # Class objects
-        self.cache =  redis.Redis(
+        self.cache = redis.Redis(
             host=redis_host,
             port=redis_port,
             db=redis_db
@@ -182,7 +259,6 @@ class UnleashClient():
             LOGGER.warning("Returning default value for feature: %s", feature_name)
             LOGGER.warning("Attempted to get feature_flag %s, but client wasn't initialized!", feature_name)
             return self._get_fallback_value(fallback_function, feature_name, context)
-
 
     # pylint: disable=broad-except
     def get_variant(self,
