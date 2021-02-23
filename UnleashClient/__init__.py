@@ -465,36 +465,3 @@ class UnleashClient():
             LOGGER.warning("Returning default flag/variation for feature: %s", feature_name)
             LOGGER.warning("Attempted to get feature flag/variation %s, but client wasn't initialized!", feature_name)
             return consts.DISABLED_VARIATION
-
-    def is_enabled_for_domain(self, feature_name: str,
-                              domain_name: Optional[str] = ''):
-        """ Static access method. """
-        context = {}
-        if domain_name:
-            context['domain_names'] = domain_name
-
-        return self.is_enabled(feature_name, context)
-
-    def is_enabled_for_business(self, feature_name: str,
-                                business_via_name: Optional[str] = ''):
-        context = {}
-        if business_via_name:
-            context['business_via_names'] = business_via_name
-
-        return self.is_enabled(feature_name, context)
-
-    def is_enabled_for_partner(self, feature_name: str,
-                               partner_name: Optional[str] = ''):
-        context = {}
-        if partner_name:
-            context['partner_names'] = partner_name
-
-        return self.is_enabled(feature_name, context)
-
-    def is_enabled_for_expert(self, feature_name: str,
-                              expert_email: Optional[str] = ''):
-        context = {}
-        if expert_email:
-            context['expert_emails'] = expert_email
-
-        return self.is_enabled(feature_name, context)
