@@ -1,19 +1,15 @@
 import redis
-import pickle
-from datetime import datetime, timezone
+
 from typing import Dict, Callable, Any, Optional, List
-import copy
-from fcache.cache import FileCache
-from apscheduler.job import Job
-from apscheduler.schedulers.background import BackgroundScheduler
-from apscheduler.triggers.interval import IntervalTrigger
+
 from UnleashClient.api import register_client
-from UnleashClient.periodic_tasks import fetch_and_load_features, aggregate_and_send_metrics
-from UnleashClient.strategies import ApplicationHostname, Default, GradualRolloutRandom, \
-    GradualRolloutSessionId, GradualRolloutUserId, UserWithId, RemoteAddress, FlexibleRollout, EnableForDomains
+from UnleashClient.periodic_tasks import fetch_and_load_features
+from UnleashClient.strategies import (
+    ApplicationHostname, Default, GradualRolloutRandom,
+    GradualRolloutSessionId, GradualRolloutUserId, UserWithId,RemoteAddress, FlexibleRollout, EnableForDomains)
 from UnleashClient import constants as consts
-from .utils import LOGGER
-from .deprecation_warnings import strategy_v2xx_deprecation_check, default_value_warning
+from UnleashClient.utils import LOGGER
+from UnleashClient.deprecation_warnings import strategy_v2xx_deprecation_check, default_value_warning
 
 class FeatureTogglesFromConst:
     def __init__(self):
@@ -97,7 +93,11 @@ class UnleashClient():
     def __init__(self,
                  url: str,
                  app_name: str,
-                 environment: str = "default",
+                 environment: str,
+                 cas_name: str,
+                 redis_host: str,
+                 redis_port: str,
+                 redis_db: str,
                  instance_id: str = "unleash-client-python",
                  refresh_interval: int = 15,
                  metrics_interval: int = 60,
@@ -106,10 +106,7 @@ class UnleashClient():
                  custom_headers: dict = {},
                  custom_options: dict = {},
                  custom_strategies: dict = {},
-                 cache_directory: str = None,
-                 redis_host: str,
-                 redis_port: str,
-                 redis_db: str) -> None:
+                 cache_directory: str = None) -> None:
         """
         A client for the Unleash feature toggle system.
 
@@ -148,13 +145,6 @@ class UnleashClient():
             db=redis_db
         )
         self.features = {}  # type: Dict
-        #self.scheduler = BackgroundScheduler()
-        self.fl_job = None  # type: Job
-        self.metric_job = None  # type: Job
-        #self.cache.set(
-        #    consts.METRIC_LAST_SENT_TIME,
-        #    pickle.dumps(datetime.now(timezone.utc))
-        #)
 
         # Mappings
         default_strategy_mapping = {
@@ -189,27 +179,17 @@ class UnleashClient():
         :return:
         """
         # Setup
-        #fl_args = {
-        #    "url": self.unleash_url,
-        #    "app_name": self.unleash_app_name,
-        #    "instance_id": self.unleash_instance_id,
-        #    "custom_headers": self.unleash_custom_headers,
-        #    "custom_options": self.unleash_custom_options,
-        #    "cache": self.cache,
-        #    "features": self.features,
-        #    "strategy_mapping": self.strategy_mapping
-        #}
-#
-        #metrics_args = {
-        #    "url": self.unleash_url,
-        #    "app_name": self.unleash_app_name,
-        #    "instance_id": self.unleash_instance_id,
-        #    "custom_headers": self.unleash_custom_headers,
-        #    "custom_options": self.unleash_custom_options,
-        #    "features": self.features,
-        #    "ondisk_cache": self.cache
-        #}
-#
+        fl_args = {
+            "url": self.unleash_url,
+            "app_name": self.unleash_app_name,
+            "instance_id": self.unleash_instance_id,
+            "custom_headers": self.unleash_custom_headers,
+            "custom_options": self.unleash_custom_options,
+            "cache": self.cache,
+            "features": self.features,
+            "strategy_mapping": self.strategy_mapping
+        }
+
         # Register app
         if not self.unleash_disable_registration:
             register_client(
@@ -218,22 +198,7 @@ class UnleashClient():
                 self.unleash_custom_options, self.strategy_mapping
             )
 
-        #fetch_and_load_features(**fl_args)
-
-        # Start periodic jobs
-        #self.scheduler.start()
-        #self.fl_job = self.scheduler.add_job(
-        #    fetch_and_load_features,
-        #    trigger=IntervalTrigger(seconds=int#(self.unleash_refresh_interval)),
-        #    kwargs=fl_args
-        #)
-
-        # if not self.unleash_disable_metrics:
-        #     self.metric_job = self.scheduler.add_job(
-        #         aggregate_and_send_metrics,
-        #         trigger=IntervalTrigger(seconds=int#( self.unleash_metrics_interval)),
-        #         kwargs=metrics_args
-        #     )
+        fetch_and_load_features(**fl_args)
 
         self.is_initialized = True
 
@@ -245,10 +210,6 @@ class UnleashClient():
 
         :return:
         """
-        self.fl_job.remove()
-        if self.metric_job:
-            self.metric_job.remove()
-        self.scheduler.shutdown()
         self.cache.delete()
 
     @staticmethod
