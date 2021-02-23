@@ -187,7 +187,7 @@ class UnleashClient():
         # Configuration
         self.unleash_url = url.rstrip('\\')
         self.unleash_app_name = app_name
-        self.unleash_environment = f'{cas}|{environment}'
+        self.unleash_environment = f'{cas_name}|{environment}'
         self.unleash_instance_id = instance_id
         self.unleash_refresh_interval = refresh_interval
         self.unleash_metrics_interval = metrics_interval
