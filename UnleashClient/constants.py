@@ -38,3 +38,22 @@ FEATURE_TOGGLES_API_RESPONSE = {
         "partner_names": ["Platform Demo"]
     }
 }
+
+FEATURE_TOGGLES_ENABLED = True
+
+FeatureToggles.initialize(url="http://128.199.29.137:4242/api", app_name="feature-toggles-poc",
+cas_name='haptik',
+environment='development',
+instance_id="haptik-development-dev-parvez-vm-1", custom_strategies=my_custom_strategies, redis_host="localhost", redis_port="6379",redis_db="8")
+
+
+        fl_args = {
+            "url": "http://128.199.29.137:4242/api",
+            "app_name": "feature-toggles-poc",
+            "instance_id": "haptik-development-dev-parvez-vm-1",
+            "custom_headers": {},
+            "custom_options": {},
+            "cache": cache,
+            "features": {},
+            "strategy_mapping": strategy_mapping
+        }

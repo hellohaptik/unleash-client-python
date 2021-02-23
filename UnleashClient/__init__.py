@@ -100,7 +100,7 @@ class FeatureToggles:
     __cas_name = None
     __environment = None
 
-    __is_unleash_available = True
+    __is_unleash_available = True if consts.FEATURE_TOGGLES_ENABLED else False
 
     def __init__(self):
         """Initialize a class"""
@@ -122,7 +122,7 @@ class FeatureToggles:
                    redis_db: str,
                    custom_strategies: Optional[Dict] = {},):
         """ Static access method. """
-        if FeatureToggles.__is_unleash_available:
+        if FeatureToggles.__client is None:
             FeatureToggles.__url = url
             FeatureToggles.__app_name = app_name
             FeatureToggles.__cas_name = cas_name
@@ -132,27 +132,29 @@ class FeatureToggles:
             FeatureToggles.__redis_db = redis_db
             FeatureToggles.__instance_id = instance_id
             FeatureToggles.__custom_strategies = custom_strategies
-        else:
-            FeatureToggles.__client = FeatureTogglesFromConst()
+
 
     @staticmethod
     def __get_unleash_client():
         """
         Initialize the client if client is None Else Return the established client
         """
-        if FeatureToggles.__client is None:
-            FeatureToggles.__client = UnleashClient(
-                url=FeatureToggles.__url,
-                app_name=FeatureToggles.__app_name,
-                instance_id=FeatureToggles.__instance_id,
-                cas_name=FeatureToggles.__cas_name,
-                environment=FeatureToggles.__environment,
-                redis_host=FeatureToggles.__redis_host,
-                redis_port=FeatureToggles.__redis_port,
-                redis_db=FeatureToggles.__redis_db,
-                custom_strategies=FeatureToggles.__custom_strategies
-            )
-            FeatureToggles.__client.initialize_client()
+        if FeatureToggles.__is_unleash_available:
+            if FeatureToggles.__client is None:
+                FeatureToggles.__client = UnleashClient(
+                    url=FeatureToggles.__url,
+                    app_name=FeatureToggles.__app_name,
+                    instance_id=FeatureToggles.__instance_id,
+                    cas_name=FeatureToggles.__cas_name,
+                    environment=FeatureToggles.__environment,
+                    redis_host=FeatureToggles.__redis_host,
+                    redis_port=FeatureToggles.__redis_port,
+                    redis_db=FeatureToggles.__redis_db,
+                    custom_strategies=FeatureToggles.__custom_strategies
+                )
+                FeatureToggles.__client.initialize_client()
+        else:
+            FeatureToggles.__client = FeatureTogglesFromConst()
 
         return FeatureToggles.__client
 
