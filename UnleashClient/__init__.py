@@ -1,15 +1,18 @@
 import redis
 
-from typing import Dict, Callable, Any, Optional, List
+from typing import Dict, Callable, Any, Optional
 
 from UnleashClient.api import register_client
 from UnleashClient.periodic_tasks import fetch_and_load_features
 from UnleashClient.strategies import (
     ApplicationHostname, Default, GradualRolloutRandom,
-    GradualRolloutSessionId, GradualRolloutUserId, UserWithId,RemoteAddress, FlexibleRollout, EnableForDomains)
+    GradualRolloutSessionId, GradualRolloutUserId, UserWithId,
+    RemoteAddress, FlexibleRollout, EnableForDomains
+)
 from UnleashClient import constants as consts
 from UnleashClient.utils import LOGGER
 from UnleashClient.deprecation_warnings import strategy_v2xx_deprecation_check, default_value_warning
+
 
 class FeatureTogglesFromConst:
     def __init__(self):
@@ -29,7 +32,8 @@ class FeatureTogglesFromConst:
         """
         is_feature_enabled = feature_name in self.feature_toggles_dict
 
-        if not is_feature_enabled:  # If Feature is not enabled then return is_feature_enabled Value
+        # If Feature is not enabled then return is_feature_enabled Value
+        if not is_feature_enabled:
             return is_feature_enabled
 
         if not app_context:  # If there's not any app_context then return is_feature_enabled value
@@ -139,7 +143,7 @@ class UnleashClient():
         }
 
         # Class objects
-        self.cache =  redis.Redis(
+        self.cache = redis.Redis(
             host=redis_host,
             port=redis_port,
             db=redis_db
@@ -255,7 +259,6 @@ class UnleashClient():
             LOGGER.warning("Returning default value for feature: %s", feature_name)
             LOGGER.warning("Attempted to get feature_flag %s, but client wasn't initialized!", feature_name)
             return self._get_fallback_value(fallback_function, feature_name, context)
-
 
     # pylint: disable=broad-except
     def get_variant(self,
