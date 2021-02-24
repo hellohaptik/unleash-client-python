@@ -121,7 +121,6 @@ class FeatureToggles:
             FeatureToggles.__redis_port = redis_port
             FeatureToggles.__redis_db = redis_db
             FeatureToggles.__enable_toggle_service = enable_toggle_service
-            FeatureToggles.__client = FeatureToggles.__get_unleash_client()
         else:
             raise Exception("Client has been already initialized")
 
