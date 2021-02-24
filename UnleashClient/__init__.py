@@ -93,14 +93,12 @@ class FeatureToggles:
     __url = None
     __app_name = None
     __instance_id = None
-    __custom_strategies = {}
     __redis_host = None
     __redis_port = None
     __redis_db = None
     __cas_name = None
     __environment = None
-
-    __is_unleash_available = True if consts.FEATURE_TOGGLES_ENABLED else False
+    __enable_toggle_service = True
 
     def __init__(self):
         """Initialize a class"""
@@ -120,26 +118,27 @@ class FeatureToggles:
                    redis_host: str,
                    redis_port: str,
                    redis_db: str,
-                   custom_strategies: Optional[Dict] = {},):
+                   enable_toggle_service: bool = True) -> None:
         """ Static access method. """
         if FeatureToggles.__client is None:
             FeatureToggles.__url = url
             FeatureToggles.__app_name = app_name
+            FeatureToggles.__instance_id = instance_id
             FeatureToggles.__cas_name = cas_name
             FeatureToggles.__environment = environment
             FeatureToggles.__redis_host = redis_host
             FeatureToggles.__redis_port = redis_port
             FeatureToggles.__redis_db = redis_db
-            FeatureToggles.__instance_id = instance_id
-            FeatureToggles.__custom_strategies = custom_strategies
-
+            FeatureToggles.__enable_toggle_service = enable_toggle_service
+        else:
+            raise Exception("Client has been already initialized")
 
     @staticmethod
     def __get_unleash_client():
         """
         Initialize the client if client is None Else Return the established client
         """
-        if FeatureToggles.__is_unleash_available:
+        if FeatureToggles.__enable_toggle_service:
             if FeatureToggles.__client is None:
                 FeatureToggles.__client = UnleashClient(
                     url=FeatureToggles.__url,
@@ -149,8 +148,7 @@ class FeatureToggles:
                     environment=FeatureToggles.__environment,
                     redis_host=FeatureToggles.__redis_host,
                     redis_port=FeatureToggles.__redis_port,
-                    redis_db=FeatureToggles.__redis_db,
-                    custom_strategies=FeatureToggles.__custom_strategies
+                    redis_db=FeatureToggles.__redis_db
                 )
                 FeatureToggles.__client.initialize_client()
         else:
