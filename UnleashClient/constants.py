@@ -38,5 +38,3 @@ FEATURE_TOGGLES_API_RESPONSE = {
         "partner_names": ["Platform Demo"]
     }
 }
-
-FEATURE_TOGGLES_ENABLED = True
