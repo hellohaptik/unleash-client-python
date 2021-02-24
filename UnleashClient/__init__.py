@@ -100,15 +100,6 @@ class FeatureToggles:
     __environment = None
     __enable_toggle_service = True
 
-    def __init__(self):
-        """Initialize a class"""
-        if FeatureToggles.__client is None:
-            print(
-                "FeatureFlag class not initialized!"
-            )
-        else:
-            return FeatureToggles.__client
-
     @staticmethod
     def initialize(url: str,
                    app_name: str,
