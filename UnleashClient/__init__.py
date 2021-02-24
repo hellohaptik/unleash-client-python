@@ -166,8 +166,9 @@ class FeatureToggles:
             eg: `enable_language_support`
 
         Returns:
-            (str): fully constructed feature name
-                eg: 'haptik.production.enable_language_support'
+            (str): fully constructed feature name including
+                format => '{cas_name}.{environment}.{feature_name}'
+                eg => 'haptik.production.enable_language_support'
         """
         try:
             full_feature_name = (
