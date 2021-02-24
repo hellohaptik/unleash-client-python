@@ -16,28 +16,7 @@ from UnleashClient.deprecation_warnings import strategy_v2xx_deprecation_check, 
 
 class FeatureTogglesFromConst:
     def __init__(self):
-        self.feature_toggles_dict = {
-    "haptik.development.enable_smart_skills": {
-        "domain_names": ["test_pvz_superman", "priyanshisupermandefault"],
-        "business_via_names": ["testpvzsupermanchannel", "priyanshisupermandefaultchannel"],
-        "partner_names": ["Platform Demo"]
-    },
-    "prestaging.staging.enable_smart_skills": {
-        "domain_names": ["test_pvz_superman", "priyanshisupermandefault"],
-        "business_via_names": ["testpvzsupermanchannel", "priyanshisupermandefaultchannel"],
-        "partner_names": ["Platform Demo"]
-    },
-    "haptik.staging.enable_smart_skills": {
-        "domain_names": ["test_pvz_superman", "priyanshisupermandefault"],
-        "business_via_names": ["testpvzsupermanchannel", "priyanshisupermandefaultchannel"],
-        "partner_names": ["Platform Demo"]
-    },
-    "haptik.production.enable_smart_skills": {
-        "domain_names": ["test_pvz_superman", "priyanshisupermandefault"],
-        "business_via_names": ["testpvzsupermanchannel", "priyanshisupermandefaultchannel"],
-        "partner_names": ["Platform Demo"]
-    }
-}
+        self.feature_toggles_dict = consts.FEATURE_TOGGLES_API_RESPONSE
 
     def is_enabled(self, feature_name,
                    app_context: Optional[Dict] = {}) -> bool:
