@@ -170,12 +170,12 @@ class FeatureToggles:
                 eg: 'haptik.production.enable_language_support'
         """
         try:
-            feature_name = (
+            full_feature_name = (
                 f'{FeatureToggles.__cas_name}.'
                 f'{FeatureToggles.__environment}.'
                 f'{feature_name}'
             )
-            return feature_name
+            return full_feature_name
         except Exception as err:
             raise Exception(f'Error while forming the feature name: {str(err)}')
 
