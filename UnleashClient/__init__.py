@@ -125,7 +125,7 @@ class FeatureToggles:
         """Initialize a class"""
         if FeatureToggles.__client is None:
             print(
-                "FeatureFlag class not initialized!, Initializing the Unleash Client"
+                "FeatureFlag class not initialized!"
             )
         else:
             return FeatureToggles.__client
