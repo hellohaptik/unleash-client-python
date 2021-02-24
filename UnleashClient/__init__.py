@@ -163,6 +163,7 @@ class FeatureToggles:
 
         Args:
             feature_name(str): Feature Name
+            eg: `enable_language_support`
 
         Returns:
             (str): fully constructed feature name
