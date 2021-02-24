@@ -8,3 +8,6 @@ from .RemoteAddress import RemoteAddress
 from .ApplicationHostname import ApplicationHostname
 from .FlexibleRolloutStrategy import FlexibleRollout
 from .EnableForDomainStrategy import EnableForDomains
+from .EnableForBusinessStrategy import EnableForBusinesses
+from .EnableForExpertStrategy import EnableForExperts
+from .EnableForPartnerStrategy import EnableForPartners
