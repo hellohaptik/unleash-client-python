@@ -296,3 +296,47 @@ class FeatureToggles:
 
         return FeatureToggles.__get_unleash_client().is_enabled(feature_name,
                                                                 context)
+
+    @staticmethod
+    def fetch_feature_toggles():
+        """
+        Returns(Dict):
+            Feature toggles data
+            Eg: {
+                "<CAS-Name>.<ENVIRONMENT>.<FeatureName>": {
+                    "domain_names": [<Domain Names List>],
+                    "business_via_names": [<List of Business Via Names>],
+                    "partner_names": [<List Of Partner Names>]
+                }
+            }
+        """
+        feature_toggles = pickle.loads(
+            FeatureToggles.__cache.get(consts.FEATURES_URL)
+        )
+        response = {}
+        if feature_toggles:
+            features = feature_toggles.get('features', None)
+            if features is not None:
+                for feature in features:
+                    feature_name = response[feature['name']]
+                    if feature_name not in response:
+                        response[feature_name] = {}
+                    strategies = feature.get('strategies', [])
+                    for strategy in strategies:
+                        strategy_name = strategy.get('name', '')
+                        parameters = strategy.get('parameters', {})
+                        if strategy_name == 'EnableForPartners':
+                            partner_names = parameters.get('partner_names', '').split(',')
+                            response[feature_name]['partner_names'] = partner_names
+                        elif strategy_name == 'EnableForBusinesses':
+                            business_via_names = parameters.get('business_via_names', '').split(',')
+                            response[feature_name]['business_via_names'] = business_via_names
+                        elif strategy_name == 'EnableForDomains':
+                            domain_names = parameters.get('domain_names', '').split(',')
+                            response[feature_name]['domain_names'] = domain_names
+                        elif strategy_name == 'EnableForExperts':
+                            expert_emails = parameters.get('expert_emails', '').split(',')
+                            response[feature_name]['expert_emails'] = expert_emails
+                        # Keep updating this list for new strategies which gets added
+
+
