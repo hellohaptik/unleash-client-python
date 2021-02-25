@@ -1,6 +1,12 @@
+# Python Imports
+import redis
+import pickle
 from typing import Dict, Any, Optional
+
+# Unleash Imports
 from UnleashClient import constants as consts
 from UnleashClient import UnleashClient
+from UnleashClient.utils import LOGGER
 
 
 class FeatureTogglesFromConst:
@@ -87,6 +93,7 @@ class FeatureToggles:
     __redis_db = None
     __cas_name = None
     __environment = None
+    __cache = None
     __enable_toggle_service = True
 
     @staticmethod
@@ -110,8 +117,50 @@ class FeatureToggles:
             FeatureToggles.__redis_port = redis_port
             FeatureToggles.__redis_db = redis_db
             FeatureToggles.__enable_toggle_service = enable_toggle_service
+            FeatureToggles.__cache = FeatureToggles.__get_cache()
         else:
             raise Exception("Client has been already initialized")
+
+    @staticmethod
+    def __get_cache():
+        """
+        Create redis connection
+        """
+        if FeatureToggles.__cache is None:
+            FeatureToggles.__cache = redis.Redis(
+                host=FeatureToggles.__redis_host,
+                port=FeatureToggles.__redis_port,
+                db=FeatureToggles.__redis_db
+            )
+
+        return FeatureToggles.__cache
+
+    @staticmethod
+    def update_cache(data: Dict[str, Any]) -> None:
+        """
+        Update cache data
+
+        Args:
+            data(dict): Feature toggles Data
+
+        Returns:
+            None
+        """
+        if FeatureToggles.__cache is None:
+            raise Exception(
+                'To update cache Feature Toggles class needs to be initialised'
+            )
+
+        LOGGER.info(f'Updating the cache data: {data}')
+        try:
+            FeatureToggles.__cache.set(
+                consts.FEATURES_URL, pickle.dumps(data)
+            )
+        except Exception as err:
+            raise Exception(
+                f'Exception occured while updating the redis cache: {str(err)}'
+            )
+        LOGGER.info(f'Cache Updatation is Done')
 
     @staticmethod
     def __get_unleash_client():
@@ -247,4 +296,3 @@ class FeatureToggles:
 
         return FeatureToggles.__get_unleash_client().is_enabled(feature_name,
                                                                 context)
-
