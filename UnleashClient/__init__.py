@@ -2,6 +2,7 @@ import redis
 
 from typing import Dict, Callable
 
+from UnleashClient.api import register_client
 from UnleashClient.periodic_tasks import fetch_and_load_features
 from UnleashClient.strategies import ApplicationHostname, Default, GradualRolloutRandom, \
     GradualRolloutSessionId, GradualRolloutUserId, UserWithId, RemoteAddress, FlexibleRollout, \
@@ -119,6 +120,13 @@ class UnleashClient():
             "features": self.features,
             "strategy_mapping": self.strategy_mapping
         }
+        # Register app
+        if not self.unleash_disable_registration:
+            register_client(
+                self.unleash_url, self.unleash_app_name, self.unleash_instance_id,
+                self.unleash_metrics_interval, self.unleash_custom_headers,
+                self.unleash_custom_options, self.strategy_mapping
+            )
 
         fetch_and_load_features(**fl_args)
 
