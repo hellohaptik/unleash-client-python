@@ -310,6 +310,7 @@ class FeatureToggles:
                 }
             }
         """
+        # TODO: Remove the cas and environment name from the feature toggles while returning the response
         feature_toggles = pickle.loads(
             FeatureToggles.__cache.get(consts.FEATURES_URL)
         )
