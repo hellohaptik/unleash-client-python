@@ -2,17 +2,18 @@ from UnleashClient.strategies import Strategy
 
 class EnableForDomains(Strategy):
     def load_provisioning(self) -> list:
-        return [x.strip() for x in self.parameters["domainIds"].split(',')]
+        return [x.strip() for x in self.parameters["domain_names"].split(',')]
 
     def apply(self, context: dict = None) -> bool:
         """
-        Turn on if I'm a cat.
-
-        :return:
+        Check if feature is enabled for given domain_name or not
+        
+        Args:
+            context(dict): domain_name provided as context
         """
         default_value = False
 
-        if "domainIds" in context.keys():
-            default_value = context["domainIds"] in self.parsed_provisioning
+        if "domain_names" in context.keys():
+            default_value = context["domain_names"] in self.parsed_provisioning
 
         return default_value

@@ -40,11 +40,12 @@ class FeatureTogglesFromConst:
         feature_data = self.feature_toggles_dict[feature_name]
         return app_context_parameter_value in feature_data.get(app_context_parameter_key, [])
 
-    def fetch_feature_toggles(self) -> Dict[str, Any]:
+    @staticmethod
+    def fetch_feature_toggles() -> Dict[str, Any]:
         """
         Return Feature toggles from const
         """
-        return self.feature_toggles_dict
+        return consts.FEATURE_TOGGLES_API_RESPONSE
 
     @staticmethod
     def is_enabled_for_partner(feature_name: str,
@@ -296,3 +297,51 @@ class FeatureToggles:
 
         return FeatureToggles.__get_unleash_client().is_enabled(feature_name,
                                                                 context)
+
+    @staticmethod
+    def fetch_feature_toggles():
+        """
+        Returns(Dict):
+            Feature toggles data
+            Eg: {
+                "<CAS-Name>.<ENVIRONMENT>.<FeatureName>": {
+                    "domain_names": [<Domain Names List>],
+                    "business_via_names": [<List of Business Via Names>],
+                    "partner_names": [<List Of Partner Names>]
+                }
+            }
+        """
+        # TODO: Remove the cas and environment name from the feature toggles while returning the response
+        feature_toggles = pickle.loads(
+            FeatureToggles.__cache.get(consts.FEATURES_URL)
+        )
+        response = {}
+        if feature_toggles:
+            features = feature_toggles.get('features', None)
+            if features is not None:
+                for feature in features:
+                    full_feature_name = feature['name']
+                    # split the feature and get compare the cas and environment name
+                    feature = full_feature_name.split('.')
+                    cas_name = feature[0]
+                    environment = feature[1]
+                    if cas_name == FeatureToggles.__cas_name and environment == FeatureToggles.__environment:
+                        if full_feature_name not in response:
+                            response[full_feature_name] = {}
+                        strategies = feature.get('strategies', [])
+                        for strategy in strategies:
+                            strategy_name = strategy.get('name', '')
+                            parameters = strategy.get('parameters', {})
+                            if strategy_name == 'EnableForPartners':
+                                partner_names = parameters.get('partner_names', '').replace(' ', '').split(',')
+                                response[full_feature_name]['partner_names'] = partner_names
+                            elif strategy_name == 'EnableForBusinesses':
+                                business_via_names = parameters.get('business_via_names', '').replace(' ', '').split(',')
+                                response[full_feature_name]['business_via_names'] = business_via_names
+                            elif strategy_name == 'EnableForDomains':
+                                domain_names = parameters.get('domain_names', '').replace(' ', '').split(',')
+                                response[full_feature_name]['domain_names'] = domain_names
+                            elif strategy_name == 'EnableForExperts':
+                                expert_emails = parameters.get('expert_emails', '').replace(' ', '').split(',')
+                                response[full_feature_name]['expert_emails'] = expert_emails
+                            # Keep updating this list for new strategies which gets added
