@@ -318,23 +318,28 @@ class FeatureToggles:
             features = feature_toggles.get('features', None)
             if features is not None:
                 for feature in features:
-                    feature_name = feature['name']
-                    if feature_name not in response:
-                        response[feature_name] = {}
-                    strategies = feature.get('strategies', [])
-                    for strategy in strategies:
-                        strategy_name = strategy.get('name', '')
-                        parameters = strategy.get('parameters', {})
-                        if strategy_name == 'EnableForPartners':
-                            partner_names = parameters.get('partner_names', '').replace(' ', '').split(',')
-                            response[feature_name]['partner_names'] = partner_names
-                        elif strategy_name == 'EnableForBusinesses':
-                            business_via_names = parameters.get('business_via_names', '').replace(' ', '').split(',')
-                            response[feature_name]['business_via_names'] = business_via_names
-                        elif strategy_name == 'EnableForDomains':
-                            domain_names = parameters.get('domain_names', '').replace(' ', '').split(',')
-                            response[feature_name]['domain_names'] = domain_names
-                        elif strategy_name == 'EnableForExperts':
-                            expert_emails = parameters.get('expert_emails', '').replace(' ', '').split(',')
-                            response[feature_name]['expert_emails'] = expert_emails
-                        # Keep updating this list for new strategies which gets added
+                    full_feature_name = feature['name']
+                    # split the feature and get compare the cas and environment name
+                    feature = full_feature_name.split('.')
+                    cas_name = feature[0]
+                    environment = feature[1]
+                    if cas_name == FeatureToggles.__cas_name and environment == FeatureToggles.__environment:
+                        if full_feature_name not in response:
+                            response[full_feature_name] = {}
+                        strategies = feature.get('strategies', [])
+                        for strategy in strategies:
+                            strategy_name = strategy.get('name', '')
+                            parameters = strategy.get('parameters', {})
+                            if strategy_name == 'EnableForPartners':
+                                partner_names = parameters.get('partner_names', '').replace(' ', '').split(',')
+                                response[full_feature_name]['partner_names'] = partner_names
+                            elif strategy_name == 'EnableForBusinesses':
+                                business_via_names = parameters.get('business_via_names', '').replace(' ', '').split(',')
+                                response[full_feature_name]['business_via_names'] = business_via_names
+                            elif strategy_name == 'EnableForDomains':
+                                domain_names = parameters.get('domain_names', '').replace(' ', '').split(',')
+                                response[full_feature_name]['domain_names'] = domain_names
+                            elif strategy_name == 'EnableForExperts':
+                                expert_emails = parameters.get('expert_emails', '').replace(' ', '').split(',')
+                                response[full_feature_name]['expert_emails'] = expert_emails
+                            # Keep updating this list for new strategies which gets added
