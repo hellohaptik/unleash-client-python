@@ -40,11 +40,12 @@ class FeatureTogglesFromConst:
         feature_data = self.feature_toggles_dict[feature_name]
         return app_context_parameter_value in feature_data.get(app_context_parameter_key, [])
 
-    def fetch_feature_toggles(self) -> Dict[str, Any]:
+    @staticmethod
+    def fetch_feature_toggles() -> Dict[str, Any]:
         """
         Return Feature toggles from const
         """
-        return self.feature_toggles_dict
+        return consts.FEATURE_TOGGLES_API_RESPONSE
 
     @staticmethod
     def is_enabled_for_partner(feature_name: str,
