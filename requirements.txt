@@ -5,6 +5,7 @@ mmh3==2.5.1
 APScheduler==3.6.3
 redis==2.10.6
 
+# TODO: Remove up the package post removing the code which will not get used
 # Development packages
 bumpversion==0.6.0
 coveralls==3.0.1
