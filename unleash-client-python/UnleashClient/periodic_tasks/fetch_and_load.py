@@ -20,7 +20,31 @@ def fetch_and_load_features(url: str,
     )
 
     if feature_provisioning:
-        cache.set(FEATURES_URL, pickle.dumps(feature_provisioning))
+        # Sample data we're writing into cache
+        # {
+        #   "features": [{
+        #     "name": "haptik.development.enable_smart_skills",
+        #     "description": "Feature to enable smart skills on dev servers",
+        #     "type": "release",
+        #     "project": "default",
+        #     "enabled": true,
+        #     "stale": false,
+        #     "strategies": [
+        #         {
+        #         "name": "EnableForPartners",
+        #         "parameters": {
+        #             "partner_names": "Platform Demo,haptik,demo,aksc"
+        #         }
+        #         }
+        #     ],
+        #     "variants": [],
+        #     "createdAt": "2021-03-08T09:14:41.828Z"
+        #   }]
+        # }
+        features = feature_provisioning.get('features', [])
+        if not features:
+            LOGGER.warning("Features are empty")
+        cache.set(FEATURES_URL, pickle.dumps(features))
     else:
         LOGGER.warning("Unable to get feature flag toggles, using cached provisioning.")
 

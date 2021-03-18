@@ -316,32 +316,47 @@ class FeatureToggles:
             FeatureToggles.__cache.get(consts.FEATURES_URL)
         )
         response = {}
-        if feature_toggles:
-            features = feature_toggles.get('features', None)
-            if features is not None:
-                for feature in features:
-                    full_feature_name = feature['name']
+        try:
+            if feature_toggles:
+                for feature_toggle in feature_toggles:
+                    full_feature_name = feature_toggle['name']
                     # split the feature and get compare the cas and environment name
                     feature = full_feature_name.split('.')
                     cas_name = feature[0]
                     environment = feature[1]
+
+                    # Define empty list for empty values
+                    domain_names = []
+                    partner_names = []
+                    business_via_names = []
+                    expert_emails = []
+
                     if cas_name == FeatureToggles.__cas_name and environment == FeatureToggles.__environment:
                         if full_feature_name not in response:
                             response[full_feature_name] = {}
-                        strategies = feature.get('strategies', [])
+                        strategies = feature_toggle.get('strategies', [])
                         for strategy in strategies:
                             strategy_name = strategy.get('name', '')
                             parameters = strategy.get('parameters', {})
                             if strategy_name == 'EnableForPartners':
                                 partner_names = parameters.get('partner_names', '').replace(' ', '').split(',')
-                                response[full_feature_name]['partner_names'] = partner_names
+
                             elif strategy_name == 'EnableForBusinesses':
                                 business_via_names = parameters.get('business_via_names', '').replace(' ', '').split(',')
-                                response[full_feature_name]['business_via_names'] = business_via_names
                             elif strategy_name == 'EnableForDomains':
                                 domain_names = parameters.get('domain_names', '').replace(' ', '').split(',')
-                                response[full_feature_name]['domain_names'] = domain_names
                             elif strategy_name == 'EnableForExperts':
                                 expert_emails = parameters.get('expert_emails', '').replace(' ', '').split(',')
-                                response[full_feature_name]['expert_emails'] = expert_emails
-                            # Keep updating this list for new strategies which gets added
+
+                                # Keep updating this list for new strategies which gets added
+
+                        # Assign the strategies data to feature name
+                        response[full_feature_name]['partner_names'] = partner_names
+                        response[full_feature_name]['business_via_names'] = business_via_names
+                        response[full_feature_name]['domain_names'] = domain_names
+                        response[full_feature_name]['expert_emails'] = expert_emails
+        except Exception as err:
+            # Handle this exception from where this util gets called
+            raise Exception(f'Error occured while parsing the response: {str(err)}')
+
+        return response
