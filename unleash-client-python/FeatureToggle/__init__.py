@@ -316,6 +316,7 @@ class FeatureToggles:
             FeatureToggles.__cache.get(consts.FEATURES_URL)
         )
         response = {}
+        try:
         if feature_toggles:
             for feature_toggle in feature_toggles:
                 full_feature_name = feature_toggle['name']
@@ -354,3 +355,5 @@ class FeatureToggles:
                     response[full_feature_name]['business_via_names'] = business_via_names
                     response[full_feature_name]['domain_names'] = domain_names
                     response[full_feature_name]['expert_emails'] = expert_emails
+
+        return response
