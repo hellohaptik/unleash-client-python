@@ -356,6 +356,7 @@ class FeatureToggles:
                         response[full_feature_name]['domain_names'] = domain_names
                         response[full_feature_name]['expert_emails'] = expert_emails
         except Exception as err:
-            raise Exception(f'Errro occured while parsing the response: {str(err)}')
+            # Handle this exception from where this util gets called
+            raise Exception(f'Error occured while parsing the response: {str(err)}')
 
         return response
