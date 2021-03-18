@@ -20,7 +20,10 @@ def fetch_and_load_features(url: str,
     )
 
     if feature_provisioning:
-        cache.set(FEATURES_URL, pickle.dumps(feature_provisioning))
+        features = feature_provisioning.get('features', [])
+        if not features:
+            LOGGER.warning("Features are empty")
+        cache.set(FEATURES_URL, pickle.dumps(features))
     else:
         LOGGER.warning("Unable to get feature flag toggles, using cached provisioning.")
 
