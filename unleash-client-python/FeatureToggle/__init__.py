@@ -342,12 +342,14 @@ class FeatureToggles:
 
                         elif strategy_name == 'EnableForBusinesses':
                             business_via_names = parameters.get('business_via_names', '').replace(' ', '').split(',')
-                        elif strategy_name == 'enable_for_domains':
-                            domain_names = parameters.get('domain_ids', '').replace(' ', '').split(',')
+                        elif strategy_name == 'EnableForDomains':
+                            domain_names = parameters.get('domain_names', '').replace(' ', '').split(',')
                         elif strategy_name == 'EnableForExperts':
                             expert_emails = parameters.get('expert_emails', '').replace(' ', '').split(',')
 
                             # Keep updating this list for new strategies which gets added
+
+                    # Assign the strategies data to feature name
                     response[full_feature_name]['partner_names'] = partner_names
                     response[full_feature_name]['business_via_names'] = business_via_names
                     response[full_feature_name]['domain_names'] = domain_names
