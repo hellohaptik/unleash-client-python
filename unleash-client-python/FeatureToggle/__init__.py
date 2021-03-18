@@ -355,7 +355,7 @@ class FeatureToggles:
                         response[full_feature_name]['business_via_names'] = business_via_names
                         response[full_feature_name]['domain_names'] = domain_names
                         response[full_feature_name]['expert_emails'] = expert_emails
-            except Exception as err:
-                raise Exception(f'Errro occured while parsing the response: {str(err)}')
+        except Exception as err:
+            raise Exception(f'Errro occured while parsing the response: {str(err)}')
 
         return response
