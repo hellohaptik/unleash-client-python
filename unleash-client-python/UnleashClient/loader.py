@@ -69,10 +69,10 @@ def load_features(cache: redis.Redis,
         # Parse provisioning
         parsed_features = {}
         feature_names = [
-            d["name"] for d in feature_provisioning["features"]
+            d["name"] for d in feature_provisioning
         ]
 
-        for provisioning in feature_provisioning["features"]:
+        for provisioning in feature_provisioning:
             parsed_features[provisioning["name"]] = provisioning
 
         # Delete old features/cache
