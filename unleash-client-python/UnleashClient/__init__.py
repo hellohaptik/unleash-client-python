@@ -120,7 +120,7 @@ class UnleashClient():
             "strategy_mapping": self.strategy_mapping
         }
 
-        # Disabling the fist API cal
+        # Disabling the first API call
         #fetch_and_load_features(**fl_args)
 
         self.is_initialized = True
