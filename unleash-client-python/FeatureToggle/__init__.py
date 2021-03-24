@@ -346,7 +346,7 @@ class FeatureToggles:
                             elif strategy_name == 'EnableForDomains':
                                 domain_names = parameters.get('domain_names', '').replace(', ', ',').split(',')
                             elif strategy_name == 'EnableForExperts':
-                                expert_emails = parameters.get('expert_emails', '').replace(', ', '').split(',')
+                                expert_emails = parameters.get('expert_emails', '').replace(', ', ',').split(',')
 
                                 # Keep updating this list for new strategies which gets added
 
