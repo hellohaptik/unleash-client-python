@@ -121,7 +121,7 @@ class UnleashClient():
         }
 
         # Disabling the first API call
-        #fetch_and_load_features(**fl_args)
+        # fetch_and_load_features(**fl_args)
 
         self.is_initialized = True
 

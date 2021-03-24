@@ -342,9 +342,9 @@ class FeatureToggles:
                                 partner_names = parameters.get('partner_names', '').replace(', ', ',').split(',')
 
                             elif strategy_name == 'EnableForBusinesses':
-                                business_via_names = parameters.get('business_via_names', '').replace(', ', '').split(',')
+                                business_via_names = parameters.get('business_via_names', '').replace(', ', ',').split(',')
                             elif strategy_name == 'EnableForDomains':
-                                domain_names = parameters.get('domain_names', '').replace(', ', '').split(',')
+                                domain_names = parameters.get('domain_names', '').replace(', ', ',').split(',')
                             elif strategy_name == 'EnableForExperts':
                                 expert_emails = parameters.get('expert_emails', '').replace(', ', '').split(',')
 
