@@ -120,7 +120,8 @@ class UnleashClient():
             "strategy_mapping": self.strategy_mapping
         }
 
-        fetch_and_load_features(**fl_args)
+        # Disabling the first API call
+        # fetch_and_load_features(**fl_args)
 
         self.is_initialized = True
 
