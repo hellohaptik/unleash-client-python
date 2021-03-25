@@ -14,12 +14,6 @@ def fetch_and_load_features(url: str,
                             cache: redis.Redis,
                             features: dict,
                             strategy_mapping: dict) -> None:
-    feature_provisioning = get_feature_toggles(
-        url, app_name, instance_id,
-        custom_headers, custom_options
-    )
-
-    if feature_provisioning:
         # Sample data we're writing into cache
         # {
         #   "features": [{
