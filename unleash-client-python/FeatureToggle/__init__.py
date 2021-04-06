@@ -351,7 +351,9 @@ class FeatureToggles:
                                 # Keep updating this list for new strategies which gets added
 
                         # Assign the strategies data to feature name
-                        full_feature_name.replace(FeatureToggles.__cas_name + '.' + FeatureToggles.__environment + '.', '')
+                        active_cas_env_name = f'{FeatureToggles.__cas_name}.
+                        {FeatureToggles.__environment}.'
+                        full_feature_name = full_feature_name.replace(active_cas_env_name, '')
                         response[full_feature_name]['partner_names'] = partner_names
                         response[full_feature_name]['business_via_names'] = business_via_names
                         response[full_feature_name]['domain_names'] = domain_names
