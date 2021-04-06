@@ -351,8 +351,8 @@ class FeatureToggles:
                                 # Keep updating this list for new strategies which gets added
 
                         # Strip CAS and ENV name from feature name
-                        active_cas_env_name = f'{FeatureToggles.__cas_name}.
-                        {FeatureToggles.__environment}.'
+                        active_cas_env_name = f'{FeatureToggles.__cas_name}.'
+                        f'{FeatureToggles.__environment}.'
                         full_feature_name = full_feature_name.replace(active_cas_env_name, '')
 
                         # Assign the strategies data to feature name
