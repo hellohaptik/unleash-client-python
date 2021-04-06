@@ -332,6 +332,10 @@ class FeatureToggles:
                     expert_emails = []
 
                     if cas_name == FeatureToggles.__cas_name and environment == FeatureToggles.__environment:
+                        # Strip CAS and ENV name from feature name
+                        active_cas_env_name = f'{FeatureToggles.__cas_name}.'
+                        f'{FeatureToggles.__environment}.'
+                        full_feature_name = full_feature_name.replace(active_cas_env_name, '')
                         if full_feature_name not in response:
                             response[full_feature_name] = {}
                         strategies = feature_toggle.get('strategies', [])
@@ -349,11 +353,6 @@ class FeatureToggles:
                                 expert_emails = parameters.get('expert_emails', '').replace(', ', ',').split(',')
 
                                 # Keep updating this list for new strategies which gets added
-
-                        # Strip CAS and ENV name from feature name
-                        active_cas_env_name = f'{FeatureToggles.__cas_name}.'
-                        f'{FeatureToggles.__environment}.'
-                        full_feature_name = full_feature_name.replace(active_cas_env_name, '')
 
                         # Assign the strategies data to feature name
                         response[full_feature_name]['partner_names'] = partner_names
