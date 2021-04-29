@@ -13,7 +13,7 @@ DISABLED_VARIATION = {
 
 # Paths
 REGISTER_URL = "/client/register"
-FEATURES_URL = "/client/features"
+FEATURES_URL = "/client/features/"
 METRICS_URL = "/client/metrics"
 
 
