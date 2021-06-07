@@ -3,7 +3,7 @@ from UnleashClient.strategies import Strategy
 class EnableForBusinesses(Strategy):
     def load_provisioning(self) -> list:
         return [
-            x.strip() for x in self.parameters["businessViaNames"].split(',')
+            x.strip() for x in self.parameters["business_via_names"].split(',')
         ]
 
     def apply(self, context: dict = None) -> bool:
@@ -15,8 +15,7 @@ class EnableForBusinesses(Strategy):
         """
         default_value = False
 
-        if "businessViaNames" in context.keys():
-            default_value = context["businessViaNames"] in self.parsed_provisioning
+        if "business_via_names" in context.keys():
+            default_value = context["business_via_names"] in self.parsed_provisioning
 
         return default_value
-
