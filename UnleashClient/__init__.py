@@ -1,190 +1,30 @@
 import redis
-import pickle
-from datetime import datetime, timezone
-from typing import Dict, Callable, Any, Optional, List
-import copy
-from fcache.cache import FileCache
-from apscheduler.job import Job
-from apscheduler.schedulers.background import BackgroundScheduler
-from apscheduler.triggers.interval import IntervalTrigger
-from UnleashClient.api import register_client
-from UnleashClient.periodic_tasks import fetch_and_load_features, aggregate_and_send_metrics
+
+from typing import Dict, Callable
+
+from UnleashClient.periodic_tasks import fetch_and_load_features
 from UnleashClient.strategies import ApplicationHostname, Default, GradualRolloutRandom, \
-    GradualRolloutSessionId, GradualRolloutUserId, UserWithId, RemoteAddress, FlexibleRollout, EnableForDomains
+    GradualRolloutSessionId, GradualRolloutUserId, UserWithId, RemoteAddress, FlexibleRollout, \
+    EnableForDomains, EnableForBusinesses, EnableForPartners, EnableForExperts
 from UnleashClient import constants as consts
-from .utils import LOGGER
-from .deprecation_warnings import strategy_v2xx_deprecation_check, default_value_warning
+from UnleashClient.utils import LOGGER
+from UnleashClient.loader import load_features
+from UnleashClient.deprecation_warnings import strategy_v2xx_deprecation_check, default_value_warning
 
-
-class FeatureTogglesFromConst:
-    def __init__(self):
-        self.feature_toggles_dict = consts.FEATURE_TOGGLES_API_RESPONSE
-
-    @classmethod
-    def is_enabled(self, feature_name, app_context: Optional[Dict] = {}) -> bool:
-        """
-        Check if certain feature is enabled in const
-
-        Args:
-            feature_name(str): Name of the feature
-            app_context(dict): App context to check when certain feature is enabled for given entity
-                eg: {
-                    "partner_names": "<partner_names>"
-                }
-
-        Returns(bool): True if feature is enabled else False
-        """
-        is_feature_enabled = feature_name in self.feature_toggles_dict
-
-        if not is_feature_enabled:  # If Feature is not enabled then return is_feature_enabled Value
-            return is_feature_enabled
-
-        if not app_context:  # If there's not any app_context then return is_feature_enabled value
-            return is_feature_enabled
-
-        app_context_parameter_key = list(app_context.keys())[0]
-        app_context_parameter_value = list(app_context.values())[0]
-
-        feature_data = self.feature_toggles_dict[feature_name]
-        return app_context_parameter_value in feature_data.get(app_context_parameter_key, [])
-
-    def fetch_feature_toggles(self) -> Dict[str, Any]:
-        """
-        Return Feature toggles from const
-        """
-        return self.feature_toggles_dict
-
-    @staticmethod
-    def is_enabled_for_partner(feature_name: str,
-                               partner_name: Optional[str] = ''):
-        context = {}
-        if partner_name:
-            context['partnerNames'] = partner_name
-
-        return FeatureTogglesFromConst().is_enabled(feature_name, context)
-
-    @staticmethod
-    def is_enabled_for_expert(feature_name: str,
-                              expert_email: Optional[str] = ''):
-        context = {}
-        if expert_email:
-            context['expertEmails'] = expert_email
-
-        return FeatureTogglesFromConst().is_enabled(feature_name, context)
-
-
-class FeatureToggles:
-    __instance = None
-    __client = None
-
-    __url = None
-    __app_name = None
-    __instance_id = None
-    __custom_strategies = {}
-
-    __redis_host = None
-    __redis_port = None
-    __redis_db = None
-
-
-    def __init__(self):
-        """Initialize a class"""
-        if FeatureToggles.__instance is None:
-            print("FeatureFlag class not initialized!")
-        else:
-            return FeatureToggles.__instance
-
-
-    @classmethod
-    def __get_unleash_client(cls):
-        """ Static access method. """
-        if FeatureToggles.__client is None:
-            FeatureToggles.__client = UnleashClient(FeatureToggles.__url,                                               FeatureToggles.__app_name,
-                                                    FeatureToggles.__instance_id,
-                                                    FeatureToggles.__custom_strategies,
-                                                    FeatureToggles.__redis_host,
-                                                    FeatureToggles.__redis_port,FeatureToggles.__redis_db)
-            FeatureToggles.__client.initialize_client()
-
-        return FeatureToggles.__client
-
-    @classmethod
-    def initialize(cls,
-                   url: str,
-                   app_name: str,
-                   isstance_id: str,
-                   redis_host: str,
-                   redis_port: str,
-                   redis_db: str,
-                   custom_strategies: Optional[Dict] = {},):
-        """ Static access method. """
-        is_unleash_available = True if consts.FEATURE_TOGGLES_ENABLED else False
-        if is_unleash_available:
-            if FeatureToggles.__instance is None:
-                FeatureToggles.__instance = FeatureToggles()
-
-            FeatureToggles.__url = url
-            FeatureToggles.__app_name = app_name
-            FeatureToggles.__redis_host = redis_host
-            FeatureToggles.__redis_port = redis_port
-            FeatureToggles.__redis_db = redis_db
-            FeatureToggles.__client = cls.__get_unleash_client()
-        else:
-            FeatureToggles.__client = FeatureTogglesFromConst()
-
-    @staticmethod
-    def is_enabled_for_domain(feature_name: str,
-                              domain_name: Optional[str] = ''):
-        """ Static access method. """
-        context = {}
-        if domain_name:
-            context['domainNames'] = domain_name
-
-        return FeatureToggles.__client.is_enabled(feature_name,
-                                                  context)
-
-    @staticmethod
-    def is_enabled_for_business(feature_name: str,
-                                business_via_name: Optional[str] = ''):
-        context = {}
-        if business_via_name:
-            context['businessViaNames'] = business_via_name
-
-        return FeatureToggles.__client.is_enabled(feature_name,
-                                                  context)
-
-    @staticmethod
-    def is_enabled_for_partner(feature_name: str,
-                               partner_name: Optional[str]=''):
-        if partner_name:
-            context['partner_name'] = partner_name
-
-        return FeatureToggles.__client.is_enabled(feature_name,
-                                                  context)
-
-    @staticmethod
-    def is_enabled_for_expert(feature_name: str,
-                              expert_email: Optional[str] = ''):
-        context = {}
-        if expert_email:
-            context['expertEmails'] = expert_email
-
-        return FeatureToggles.__client.is_enabled(feature_name,
-                                                  context)
 
 # pylint: disable=dangerous-default-value
 class UnleashClient():
     """
     Client implementation.
-
     """
     def __init__(self,
                  url: str,
                  app_name: str,
+                 environment: str,
+                 cas_name: str,
                  redis_host: str,
                  redis_port: str,
                  redis_db: str,
-                 environment: str = "default",
                  instance_id: str = "unleash-client-python",
                  refresh_interval: int = 15,
                  metrics_interval: int = 60,
@@ -196,7 +36,6 @@ class UnleashClient():
                  cache_directory: str = None) -> None:
         """
         A client for the Unleash feature toggle system.
-
         :param url: URL of the unleash server, required.
         :param app_name: Name of the application using the unleash client, required.
         :param environment: Name of the environment using the unleash client, optinal & defaults to "default".
@@ -212,7 +51,7 @@ class UnleashClient():
         # Configuration
         self.unleash_url = url.rstrip('\\')
         self.unleash_app_name = app_name
-        self.unleash_environment = environment
+        self.unleash_environment = f'{cas_name}|{environment}'
         self.unleash_instance_id = instance_id
         self.unleash_refresh_interval = refresh_interval
         self.unleash_metrics_interval = metrics_interval
@@ -226,19 +65,12 @@ class UnleashClient():
         }
 
         # Class objects
-        self.cache =  redis.Redis(
+        self.cache = redis.Redis(
             host=redis_host,
             port=redis_port,
             db=redis_db
         )
         self.features = {}  # type: Dict
-        self.scheduler = BackgroundScheduler()
-        self.fl_job = None  # type: Job
-        self.metric_job = None  # type: Job
-        self.cache.set(
-            consts.METRIC_LAST_SENT_TIME,
-            pickle.dumps(datetime.now(timezone.utc))
-        )
 
         # Mappings
         default_strategy_mapping = {
@@ -250,7 +82,10 @@ class UnleashClient():
             "remoteAddress": RemoteAddress,
             "userWithId": UserWithId,
             "flexibleRollout": FlexibleRollout,
-            "EnableForDomains": EnableForDomains
+            "EnableForDomains": EnableForDomains,
+            "EnableForExperts": EnableForExperts,
+            "EnableForPartners": EnableForPartners,
+            "EnableForBusinesses": EnableForBusinesses
         }
 
         if custom_strategies:
@@ -264,12 +99,10 @@ class UnleashClient():
     def initialize_client(self) -> None:
         """
         Initializes client and starts communication with central unleash server(s).
-
         This kicks off:
         * Client registration
         * Provisioning poll
         * Stats poll
-
         :return:
         """
         # Setup
@@ -284,55 +117,18 @@ class UnleashClient():
             "strategy_mapping": self.strategy_mapping
         }
 
-        metrics_args = {
-            "url": self.unleash_url,
-            "app_name": self.unleash_app_name,
-            "instance_id": self.unleash_instance_id,
-            "custom_headers": self.unleash_custom_headers,
-            "custom_options": self.unleash_custom_options,
-            "features": self.features,
-            "ondisk_cache": self.cache
-        }
-
-        # Register app
-        if not self.unleash_disable_registration:
-            register_client(
-                self.unleash_url, self.unleash_app_name, self.unleash_instance_id,
-                self.unleash_metrics_interval, self.unleash_custom_headers,
-                self.unleash_custom_options, self.strategy_mapping
-            )
-
-        fetch_and_load_features(**fl_args)
-
-        # Start periodic jobs
-        self.scheduler.start()
-        self.fl_job = self.scheduler.add_job(
-            fetch_and_load_features,
-            trigger=IntervalTrigger(seconds=int(self.unleash_refresh_interval)),
-            kwargs=fl_args
-        )
-
-        # if not self.unleash_disable_metrics:
-        #     self.metric_job = self.scheduler.add_job(
-        #         aggregate_and_send_metrics,
-        #         trigger=IntervalTrigger(seconds=int#( self.unleash_metrics_interval)),
-        #         kwargs=metrics_args
-        #     )
+        # Disabling the first API call
+        # fetch_and_load_features(**fl_args)
+        load_features(self.cache, self.features, self.strategy_mapping)
 
         self.is_initialized = True
 
     def destroy(self):
         """
         Gracefully shuts down the Unleash client by stopping jobs, stopping the scheduler, and deleting the cache.
-
         You shouldn't need this too much!
-
         :return:
         """
-        self.fl_job.remove()
-        if self.metric_job:
-            self.metric_job.remove()
-        self.scheduler.shutdown()
         self.cache.delete()
 
     @staticmethod
@@ -352,10 +148,8 @@ class UnleashClient():
                    fallback_function: Callable = None) -> bool:
         """
         Checks if a feature toggle is enabled.
-
         Notes:
         * If client hasn't been initialized yet or an error occurs, flat will default to false.
-
         :param feature_name: Name of the feature
         :param context: Dictionary with context (e.g. IPs, email) for feature toggle.
         :param default_value: Allows override of default value. (DEPRECIATED, used fallback_function instead!)
@@ -379,17 +173,14 @@ class UnleashClient():
             LOGGER.warning("Attempted to get feature_flag %s, but client wasn't initialized!", feature_name)
             return self._get_fallback_value(fallback_function, feature_name, context)
 
-
     # pylint: disable=broad-except
     def get_variant(self,
                     feature_name: str,
                     context: dict = {}) -> dict:
         """
         Checks if a feature toggle is enabled.  If so, return variant.
-
         Notes:
         * If client hasn't been initialized yet or an error occurs, flat will default to false.
-
         :param feature_name: Name of the feature
         :param context: Dictionary with context (e.g. IPs, email) for feature toggle.
         :return: Dict with variant and feature flag status.
