@@ -232,6 +232,7 @@ class FeatureToggles:
             FeatureToggles.__cache.get(consts.FEATURES_URL)
         )
         response = {}
+
         try:
             if feature_toggles:
                 for feature_toggle in feature_toggles:
@@ -249,8 +250,8 @@ class FeatureToggles:
 
                     if cas_name == FeatureToggles.__cas_name and environment == FeatureToggles.__environment:
                         # Strip CAS and ENV name from feature name
-                        active_cas_env_name = f'{FeatureToggles.__cas_name}.'
-                        f'{FeatureToggles.__environment}.'
+                        active_cas_env_name = f'{cas_name}.{environment}.'
+                        full_feature_name = full_feature_name.replace(active_cas_env_name, '')
                         full_feature_name = full_feature_name.replace(active_cas_env_name, '')
                         if full_feature_name not in response:
                             response[full_feature_name] = {}
