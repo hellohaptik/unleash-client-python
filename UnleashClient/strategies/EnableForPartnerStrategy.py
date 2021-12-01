@@ -1,6 +1,7 @@
 
 from UnleashClient.strategies import Strategy
 
+
 class EnableForPartners(Strategy):
     def load_provisioning(self) -> list:
         return [

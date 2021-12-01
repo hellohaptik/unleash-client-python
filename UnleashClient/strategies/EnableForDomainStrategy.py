@@ -1,5 +1,6 @@
 from UnleashClient.strategies import Strategy
 
+
 class EnableForDomains(Strategy):
     def load_provisioning(self) -> list:
         return [x.strip() for x in self.parameters["domain_names"].split(',')]
