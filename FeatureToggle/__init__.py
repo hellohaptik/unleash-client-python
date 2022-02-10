@@ -9,6 +9,12 @@ from UnleashClient import UnleashClient
 from UnleashClient.utils import LOGGER
 
 
+def split_and_strip(parameters: str):
+    return [
+        x.strip() for x in parameters.split(',')
+    ]
+
+
 class FeatureToggles:
     __client = None
     __url = None
@@ -209,6 +215,29 @@ class FeatureToggles:
                                                                 context)
 
     @staticmethod
+    def is_enabled_for_team(feature_name: str,
+                            team_id: Optional[int] = None):
+        """
+        Util method to check whether given feature is enabled or not
+        Args:
+            feature_name(str): feature name
+            team_id(Optional[str]): list of team IDs
+        Returns:
+            (bool): True if feature is enabled else False
+        """
+        feature_name = FeatureToggles.__get_full_feature_name(feature_name)
+
+        context = {}
+        if team_id:
+            context['team_ids'] = team_id
+
+        return (
+            FeatureToggles
+            .__get_unleash_client()
+            .is_enabled(feature_name, context)
+        )
+
+    @staticmethod
     def fetch_feature_toggles():
         """
         Returns(Dict):
@@ -247,6 +276,7 @@ class FeatureToggles:
                     partner_names = []
                     business_via_names = []
                     expert_emails = []
+                    team_ids = []
 
                     if cas_name == FeatureToggles.__cas_name and environment == FeatureToggles.__environment:
                         # Strip CAS and ENV name from feature name
@@ -260,14 +290,15 @@ class FeatureToggles:
                             strategy_name = strategy.get('name', '')
                             parameters = strategy.get('parameters', {})
                             if strategy_name == 'EnableForPartners':
-                                partner_names = parameters.get('partner_names', '').replace(', ', ',').split(',')
-
+                                partner_names = split_and_strip(parameters.get('partner_names', ''))
                             elif strategy_name == 'EnableForBusinesses':
-                                business_via_names = parameters.get('business_via_names', '').replace(', ', ',').split(',')
+                                business_via_names = split_and_strip(parameters.get('business_via_names', ''))
                             elif strategy_name == 'EnableForDomains':
-                                domain_names = parameters.get('domain_names', '').replace(', ', ',').split(',')
+                                domain_names = split_and_strip(parameters.get('domain_names', ''))
                             elif strategy_name == 'EnableForExperts':
-                                expert_emails = parameters.get('expert_emails', '').replace(', ', ',').split(',')
+                                expert_emails = split_and_strip(parameters.get('expert_emails', ''))
+                            elif strategy_name == 'EnableForTeams':
+                                team_ids = split_and_strip(parameters.get('team_ids', ''))
 
                                 # Keep updating this list for new strategies which gets added
 
@@ -276,8 +307,9 @@ class FeatureToggles:
                         response[full_feature_name]['business_via_names'] = business_via_names
                         response[full_feature_name]['domain_names'] = domain_names
                         response[full_feature_name]['expert_emails'] = expert_emails
+                        response[full_feature_name]['team_ids'] = team_ids
         except Exception as err:
             # Handle this exception from where this util gets called
-            raise Exception(f'Error occured while parsing the response: {str(err)}')
+            raise Exception(f'An error occurred while parsing the response: {str(err)}')
 
         return response

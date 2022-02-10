@@ -7,13 +7,14 @@ from UnleashClient.strategies import ApplicationHostname, Default, GradualRollou
     GradualRolloutSessionId, GradualRolloutUserId, UserWithId, RemoteAddress, FlexibleRollout, \
     EnableForDomains, EnableForBusinesses, EnableForPartners, EnableForExperts
 from UnleashClient import constants as consts
+from UnleashClient.strategies.EnableForTeamStrategy import EnableForTeams
 from UnleashClient.utils import LOGGER
 from UnleashClient.loader import load_features
 from UnleashClient.deprecation_warnings import strategy_v2xx_deprecation_check, default_value_warning
 
 
 # pylint: disable=dangerous-default-value
-class UnleashClient():
+class UnleashClient:
     """
     Client implementation.
     """
@@ -85,7 +86,8 @@ class UnleashClient():
             "EnableForDomains": EnableForDomains,
             "EnableForExperts": EnableForExperts,
             "EnableForPartners": EnableForPartners,
-            "EnableForBusinesses": EnableForBusinesses
+            "EnableForBusinesses": EnableForBusinesses,
+            "EnableForTeams": EnableForTeams
         }
 
         if custom_strategies:
