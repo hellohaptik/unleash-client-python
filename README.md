@@ -39,7 +39,7 @@ FeatureToggles.initialize(
 # To check if feature is enabled for domain
 FeatureToggles.is_enabled_for_domain(<feature-name>, <domain_name>)
 
-# Check if certainfeature is enabled for partner
+# Check if certain feature is enabled for partner
 FeatureToggles.is_enabled_for_partner(<feature-name>, <partner_name>)
 
 # Check if certain feature is enabled for business
