@@ -27,8 +27,10 @@ def _create_strategies(provisioning: dict,
                 strategy_mapping[strategy['name']](constraints=constraint_provisioning, parameters=strategy_provisioning)
             )
         except Exception as excep:
-            LOGGER.warning("Failed to load strategy.  This may be a problem with a custom strategy.  Exception: %s",
-                           excep)
+            LOGGER.warning("Failed to load strategy.  This may be a problem with a custom strategy.  "
+                           "Exception: {}, Provisioning : {}, Strategy Mapping: {}".format(excep,
+                                                                                           provisioning,
+                                                                                           strategy_mapping))
 
     return feature_strategies
 
