@@ -34,7 +34,7 @@ def _create_strategies(provisioning: dict,
 
 
 def _create_feature(provisioning: dict,
-                    strategy_mapping: dict) -> Feature:      
+                    strategy_mapping: dict) -> Feature:
     if "strategies" in provisioning.keys():
         parsed_strategies = _create_strategies(provisioning, strategy_mapping)
     else:
