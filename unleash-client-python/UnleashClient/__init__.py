@@ -7,15 +7,16 @@ from UnleashClient.strategies import ApplicationHostname, Default, GradualRollou
     GradualRolloutSessionId, GradualRolloutUserId, UserWithId, RemoteAddress, FlexibleRollout, \
     EnableForDomains, EnableForBusinesses, EnableForPartners, EnableForExperts
 from UnleashClient import constants as consts
+from UnleashClient.strategies.EnableForTeamStrategy import EnableForTeams
 from UnleashClient.utils import LOGGER
+from UnleashClient.loader import load_features
 from UnleashClient.deprecation_warnings import strategy_v2xx_deprecation_check, default_value_warning
 
 
 # pylint: disable=dangerous-default-value
-class UnleashClient():
+class UnleashClient:
     """
     Client implementation.
-
     """
     def __init__(self,
                  url: str,
@@ -36,7 +37,6 @@ class UnleashClient():
                  cache_directory: str = None) -> None:
         """
         A client for the Unleash feature toggle system.
-
         :param url: URL of the unleash server, required.
         :param app_name: Name of the application using the unleash client, required.
         :param environment: Name of the environment using the unleash client, optinal & defaults to "default".
@@ -86,7 +86,8 @@ class UnleashClient():
             "EnableForDomains": EnableForDomains,
             "EnableForExperts": EnableForExperts,
             "EnableForPartners": EnableForPartners,
-            "EnableForBusinesses": EnableForBusinesses
+            "EnableForBusinesses": EnableForBusinesses,
+            "EnableForTeams": EnableForTeams
         }
 
         if custom_strategies:
@@ -100,12 +101,10 @@ class UnleashClient():
     def initialize_client(self) -> None:
         """
         Initializes client and starts communication with central unleash server(s).
-
         This kicks off:
         * Client registration
         * Provisioning poll
         * Stats poll
-
         :return:
         """
         # Setup
@@ -122,15 +121,14 @@ class UnleashClient():
 
         # Disabling the first API call
         # fetch_and_load_features(**fl_args)
+        load_features(self.cache, self.features, self.strategy_mapping)
 
         self.is_initialized = True
 
     def destroy(self):
         """
         Gracefully shuts down the Unleash client by stopping jobs, stopping the scheduler, and deleting the cache.
-
         You shouldn't need this too much!
-
         :return:
         """
         self.cache.delete()
@@ -152,10 +150,8 @@ class UnleashClient():
                    fallback_function: Callable = None) -> bool:
         """
         Checks if a feature toggle is enabled.
-
         Notes:
         * If client hasn't been initialized yet or an error occurs, flat will default to false.
-
         :param feature_name: Name of the feature
         :param context: Dictionary with context (e.g. IPs, email) for feature toggle.
         :param default_value: Allows override of default value. (DEPRECIATED, used fallback_function instead!)
@@ -185,10 +181,8 @@ class UnleashClient():
                     context: dict = {}) -> dict:
         """
         Checks if a feature toggle is enabled.  If so, return variant.
-
         Notes:
         * If client hasn't been initialized yet or an error occurs, flat will default to false.
-
         :param feature_name: Name of the feature
         :param context: Dictionary with context (e.g. IPs, email) for feature toggle.
         :return: Dict with variant and feature flag status.

@@ -1,20 +1,38 @@
-import setuptools
+"""Setup file for UnleashClient"""
+from setuptools import setup, find_packages
 
-with open("README.md", "r") as fh:
-    long_description = fh.read()
 
-setuptools.setup(
-    name="unleash-client",
-    version="3.6.0",
-    author="pvz301",
-    author_email="parvez.alam@haptik.co",
-    description="Client for unleash server",
-    long_description=long_description,
-    url="https://github.com/hellohaptik/unleash-python-client",
-    packages=setuptools.find_packages(),
+def readme():
+    """Include README.rst content in PyPi build information"""
+    with open('README.md') as file:
+        return file.read()
+
+# Forked by Parvez Alam
+
+setup(
+    name='UnleashClient',
+    version='3.5.0',
+    author='Ivan Lee',
+    author_email='ivanklee86@gmail.com',
+    description='Python client for the Unleash feature toggle system!',
+    long_description=readme(),
+    long_description_content_type="text/markdown",
+    url='https://github.com/Unleash/unleash-client-python',
+    packages=find_packages(),
+    install_requires=["requests==2.25.0",
+                      "fcache==0.4.7",
+                      "mmh3==2.5.1",
+                      "apscheduler==3.6.3"],
+    tests_require=['pytest', "mimesis", "responses", 'pytest-mock'],
+    zip_safe=False,
+    include_package_data=True,
     classifiers=[
-        "Programming Language :: Python :: 3",
+        "Development Status :: 5 - Production/Stable",
+        "Intended Audience :: Developers",
         "License :: OSI Approved :: MIT License",
-        "Operating System :: OS Independent",
-    ],
+        "Programming Language :: Python :: 3.5",
+        "Programming Language :: Python :: 3.6",
+        "Programming Language :: Python :: 3.7",
+        "Programming Language :: Python :: 3.8"
+    ]
 )
