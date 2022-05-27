@@ -2,7 +2,7 @@ import logging
 import mmh3  # pylint: disable=import-error
 from requests import Response
 
-LOGGER = logging.getLogger(__name__)
+LOGGER = logging.getLogger('mogambo')
 
 
 def normalized_hash(identifier: str,

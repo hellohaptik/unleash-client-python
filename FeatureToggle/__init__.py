@@ -91,9 +91,9 @@ class FeatureToggles:
             )
         except Exception as err:
             raise Exception(
-                f'Exception occured while updating the redis cache: {str(err)}'
+                f'Exception occurred while updating the redis cache: {str(err)}'
             )
-        LOGGER.info(f'Cache Updatation is Done')
+        LOGGER.info(f'Cache is updated')
 
     @staticmethod
     def __get_unleash_client():
@@ -148,12 +148,16 @@ class FeatureToggles:
         Returns:
             (bool): True if Feature is enabled else False
         """
+        if FeatureToggles.__in_memory_cache:
+            LOGGER.info(f'Rajas Returning value from in memory cache')
+            return domain_name in FeatureToggles.__in_memory_cache.get(feature_name, {}).get('domain_names', [])
+        LOGGER.info(f'Rajas In memory cache not found')
         feature_name = FeatureToggles.__get_full_feature_name(feature_name)
 
         context = {}
         if domain_name:
             context['domain_names'] = domain_name
-
+        LOGGER.info(f'Rajas returning value using Unleash Client')
         return FeatureToggles.__get_unleash_client().is_enabled(feature_name,
                                                                 context)
 
