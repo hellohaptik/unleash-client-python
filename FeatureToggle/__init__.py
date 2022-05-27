@@ -15,6 +15,9 @@ def split_and_strip(parameters: str):
     ]
 
 
+in_memory_cache = {}
+
+
 class FeatureToggles:
     __client = None
     __url = None
@@ -52,6 +55,9 @@ class FeatureToggles:
             FeatureToggles.__cache = FeatureToggles.__get_cache()
         else:
             raise Exception("Client has been already initialized")
+        global in_memory_cache
+        in_memory_cache = FeatureToggles.fetch_feature_toggles()
+        LOGGER.info(f'Rajas in_memory_cache: {in_memory_cache}')
 
     @staticmethod
     def __get_cache():
