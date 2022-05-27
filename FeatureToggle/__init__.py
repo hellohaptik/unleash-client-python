@@ -149,9 +149,8 @@ class FeatureToggles:
             (bool): True if Feature is enabled else False
         """
         if FeatureToggles.__in_memory_cache:
-            LOGGER.info(f'Rajas Returning value from in memory cache')
-            return domain_name in FeatureToggles.__in_memory_cache.get(feature_name, {}).get('domain_names', []), \
-                   FeatureToggles.__in_memory_cache
+            LOGGER.info(f'Rajas Returning value from in memory cache for domain')
+            return domain_name in FeatureToggles.__in_memory_cache.get(feature_name, {}).get('domain_names', [])
         LOGGER.info(f'Rajas In memory cache not found')
         feature_name = FeatureToggles.__get_full_feature_name(feature_name)
 
@@ -173,6 +172,10 @@ class FeatureToggles:
         Returns:
             (bool): True if Feature is enabled else False
         """
+        if FeatureToggles.__in_memory_cache:
+            LOGGER.info(f'Rajas Returning value from in memory cache for partner')
+            return partner_name in FeatureToggles.__in_memory_cache.get(feature_name, {}).get('partner_names', [])
+        LOGGER.info(f'Rajas In memory cache not found partner_names')
         feature_name = FeatureToggles.__get_full_feature_name(feature_name)
 
         context = {}
@@ -193,6 +196,9 @@ class FeatureToggles:
         Returns:
             (bool): True if Feature is enabled else False
         """
+        if FeatureToggles.__in_memory_cache:
+            LOGGER.info(f'Rajas Returning value from in memory cache for business')
+            return business_via_name in FeatureToggles.__in_memory_cache.get(feature_name, {}).get('business_via_names', [])
         feature_name = FeatureToggles.__get_full_feature_name(feature_name)
 
         context = {}
@@ -213,6 +219,9 @@ class FeatureToggles:
         Returns:
             (bool): True if Feature is enabled else False
         """
+        if FeatureToggles.__in_memory_cache:
+            LOGGER.info(f'Rajas Returning value from in memory cache for business')
+            return expert_email in FeatureToggles.__in_memory_cache.get(feature_name, {}).get('expert_emails', [])
         feature_name = FeatureToggles.__get_full_feature_name(feature_name)
 
         context = {}
