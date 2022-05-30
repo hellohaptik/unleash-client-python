@@ -166,7 +166,6 @@ class FeatureToggles:
             (bool): True if Feature is enabled else False
         """
         feature_toggles = FeatureToggles.fetch_feature_toggles()
-        LOGGER.info(f'Feature toggles cache info {FeatureToggles.fetch_feature_toggles.cache_info()}')
         return domain_name in feature_toggles.get(feature_name, {}).get('domain_names', [])
 
     @staticmethod
@@ -181,7 +180,6 @@ class FeatureToggles:
             (bool): True if Feature is enabled else False
         """
         feature_toggles = FeatureToggles.fetch_feature_toggles()
-        LOGGER.info(f'Feature toggles cache info {FeatureToggles.fetch_feature_toggles.cache_info()}')
         return partner_name in feature_toggles.get(feature_name, {}).get('partner_names', [])
 
     @staticmethod
@@ -196,7 +194,6 @@ class FeatureToggles:
             (bool): True if Feature is enabled else False
         """
         feature_toggles = FeatureToggles.fetch_feature_toggles()
-        LOGGER.info(f'Feature toggles cache info {FeatureToggles.fetch_feature_toggles.cache_info()}')
         return business_via_name in feature_toggles.get(feature_name, {}).get('business_via_names', [])
 
     @staticmethod
@@ -211,7 +208,6 @@ class FeatureToggles:
             (bool): True if Feature is enabled else False
         """
         feature_toggles = FeatureToggles.fetch_feature_toggles()
-        LOGGER.info(f'Feature toggles cache info {FeatureToggles.fetch_feature_toggles.cache_info()}')
         return expert_email in feature_toggles.get(feature_name, {}).get('expert_emails', [])
 
     @staticmethod
@@ -226,7 +222,6 @@ class FeatureToggles:
             (bool): True if feature is enabled else False
         """
         feature_toggles = FeatureToggles.fetch_feature_toggles()
-        LOGGER.info(f'Feature toggles cache info {FeatureToggles.fetch_feature_toggles.cache_info()}')
         return team_id in feature_toggles.get(feature_name, {}).get('team_ids', [])
 
     @staticmethod
