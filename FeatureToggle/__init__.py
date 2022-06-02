@@ -1,17 +1,23 @@
 # Python Imports
+import gc
 import redis
 import pickle
 from typing import Dict, Any, Optional
-from datetime import datetime, timedelta
-from functools import lru_cache, wraps
 
 # Unleash Imports
 from UnleashClient import constants as consts
 from UnleashClient import UnleashClient
 from UnleashClient.utils import LOGGER
+from datetime import datetime, timedelta
+from functools import lru_cache, wraps, _lru_cache_wrapper
 
+def split_and_strip(parameters: str):
+    return [
+        x.strip() for x in parameters.split(',')
+    ]
 
 def timed_lru_cache(seconds: int, maxsize: int = 128):
+    LOGGER.info(f'timed_lru_cache was called')
     def wrapper_cache(func):
         func = lru_cache(maxsize=maxsize)(func)
         func.lifetime = timedelta(seconds=seconds)
@@ -27,12 +33,6 @@ def timed_lru_cache(seconds: int, maxsize: int = 128):
         return wrapped_func
 
     return wrapper_cache
-
-
-def split_and_strip(parameters: str):
-    return [
-        x.strip() for x in parameters.split(',')
-    ]
 
 
 class FeatureToggles:
@@ -70,6 +70,8 @@ class FeatureToggles:
             FeatureToggles.__redis_db = redis_db
             FeatureToggles.__enable_toggle_service = enable_toggle_service
             FeatureToggles.__cache = FeatureToggles.__get_cache()
+            FeatureToggles.fetch_feature_toggles()
+            LOGGER.info(f'Fetch feature toggles initialize was called')
         else:
             raise Exception("Client has been already initialized")
 
@@ -225,7 +227,7 @@ class FeatureToggles:
         return team_id in feature_toggles.get(feature_name, {}).get('team_ids', [])
 
     @staticmethod
-    @timed_lru_cache(seconds=60, maxsize=2048)
+    @timed_lru_cache(seconds=(60*60), maxsize=2048)
     def fetch_feature_toggles():
         """
         Returns(Dict):
@@ -300,3 +302,15 @@ class FeatureToggles:
             # Handle this exception from where this util gets called
             raise Exception(f'An error occurred while parsing the response: {str(err)}')
         return response
+
+    @staticmethod
+    def clear_feature_toggles_lru_cache():
+        LOGGER.info(f'Feature toggles lru cache cleared')
+        gc.collect()
+        # All objects collected
+        objects = [i for i in gc.get_objects()
+                if isinstance(i, _lru_cache_wrapper)]
+        # All objects cleared
+        for object in objects:
+            object.cache_clear()
+            LOGGER.info(f'objects{object}')
