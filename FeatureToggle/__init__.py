@@ -7,32 +7,13 @@ from typing import Dict, Any, Optional
 # Unleash Imports
 from UnleashClient import constants as consts
 from UnleashClient import UnleashClient
-from UnleashClient.utils import LOGGER
-from datetime import datetime, timedelta
-from functools import lru_cache, wraps, _lru_cache_wrapper
+from UnleashClient.utils import LOGGER, timed_lru_cache
+from functools import _lru_cache_wrapper
 
 def split_and_strip(parameters: str):
     return [
         x.strip() for x in parameters.split(',')
     ]
-
-def timed_lru_cache(seconds: int, maxsize: int = 128):
-    LOGGER.info(f'timed_lru_cache was called')
-    def wrapper_cache(func):
-        func = lru_cache(maxsize=maxsize)(func)
-        func.lifetime = timedelta(seconds=seconds)
-        func.expiration = datetime.utcnow() + func.lifetime
-
-        @wraps(func)
-        def wrapped_func(*args, **kwargs):
-            if datetime.utcnow() >= func.expiration:
-                func.cache_clear()
-                func.expiration = datetime.utcnow() + func.lifetime
-            return func(*args, **kwargs)
-
-        return wrapped_func
-
-    return wrapper_cache
 
 
 class FeatureToggles:
@@ -305,12 +286,12 @@ class FeatureToggles:
 
     @staticmethod
     def clear_feature_toggles_lru_cache():
-        LOGGER.info(f'Feature toggles lru cache cleared')
-        gc.collect()
-        # All objects collected
-        objects = [i for i in gc.get_objects()
-                if isinstance(i, _lru_cache_wrapper)]
-        # All objects cleared
-        for object in objects:
-            object.cache_clear()
-            LOGGER.info(f'objects{object}')
+        try:
+            gc.collect()
+            lru_cache_objects = [i for i in gc.get_objects() if isinstance(i, _lru_cache_wrapper)]
+            for object in lru_cache_objects:
+                object.cache_clear()
+                LOGGER.info(f'lru_cache_objects: {object}')
+            LOGGER.info(f'Feature toggles lru cache cleared')
+        except Exception as e:
+            LOGGER.error(f'[Feature-Toggle python client]: Exception while clearing lru cache{str(e)}')

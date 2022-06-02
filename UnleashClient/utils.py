@@ -1,8 +1,10 @@
 import logging
 import mmh3  # pylint: disable=import-error
 from requests import Response
+from datetime import datetime, timedelta
+from functools import lru_cache, wraps
 
-LOGGER = logging.getLogger("mogambo")
+LOGGER = logging.getLogger(__name__)
 
 
 def normalized_hash(identifier: str,
@@ -26,3 +28,22 @@ def log_resp_info(resp: Response) -> None:
     LOGGER.debug("HTTP status code: %s", resp.status_code)
     LOGGER.debug("HTTP headers: %s", resp.headers)
     LOGGER.debug("HTTP content: %s", resp.text)
+
+
+def timed_lru_cache(seconds: int, maxsize: int = 128):
+    LOGGER.info(f'timed_lru_cache was called')
+    def wrapper_cache(func):
+        func = lru_cache(maxsize=maxsize)(func)
+        func.lifetime = timedelta(seconds=seconds)
+        func.expiration = datetime.utcnow() + func.lifetime
+
+        @wraps(func)
+        def wrapped_func(*args, **kwargs):
+            if datetime.utcnow() >= func.expiration:
+                func.cache_clear()
+                func.expiration = datetime.utcnow() + func.lifetime
+            return func(*args, **kwargs)
+
+        return wrapped_func
+
+    return wrapper_cache
