@@ -7,8 +7,9 @@ from typing import Dict, Any, Optional
 # Unleash Imports
 from UnleashClient import constants as consts
 from UnleashClient import UnleashClient
-from UnleashClient.utils import LOGGER, timed_lru_cache
-from functools import _lru_cache_wrapper
+from UnleashClient.utils import LOGGER
+from FeatureToggle.utils import timed_lru_cache
+
 
 def split_and_strip(parameters: str):
     return [
@@ -51,8 +52,9 @@ class FeatureToggles:
             FeatureToggles.__redis_db = redis_db
             FeatureToggles.__enable_toggle_service = enable_toggle_service
             FeatureToggles.__cache = FeatureToggles.__get_cache()
+            LOGGER.info(f'Initializing Feature toggles LRU cache')
             FeatureToggles.fetch_feature_toggles()
-            LOGGER.info(f'Fetch feature toggles initialize was called')
+            LOGGER.info(f'Feature toggles LRU cache initialized')
         else:
             raise Exception("Client has been already initialized")
 
@@ -91,9 +93,9 @@ class FeatureToggles:
             )
         except Exception as err:
             raise Exception(
-                f'Exception occured while updating the redis cache: {str(err)}'
+                f'Exception occurred while updating the redis cache: {str(err)}'
             )
-        LOGGER.info(f'Cache Updatation is Done')
+        LOGGER.info(f'[Feature Toggles] Cache Updated')
 
     @staticmethod
     def __get_unleash_client():
@@ -222,7 +224,7 @@ class FeatureToggles:
             }
         """
         # TODO: Remove the cas and environment name from the feature toggles while returning the response
-        LOGGER.info(f'Fetch feature toggles was called')
+        LOGGER.info(f'Loading Feature Toggles from Redis')
         if FeatureToggles.__cache is None:
             raise Exception(
                 'To update cache Feature Toggles class needs to be initialised'
@@ -286,12 +288,5 @@ class FeatureToggles:
 
     @staticmethod
     def clear_feature_toggles_lru_cache():
-        try:
-            gc.collect()
-            lru_cache_objects = [i for i in gc.get_objects() if isinstance(i, _lru_cache_wrapper)]
-            for object in lru_cache_objects:
-                object.cache_clear()
-                LOGGER.info(f'lru_cache_objects: {object}')
-            LOGGER.info(f'Feature toggles lru cache cleared')
-        except Exception as e:
-            LOGGER.error(f'[Feature-Toggle python client]: Exception while clearing lru cache{str(e)}')
+        FeatureToggles.fetch_feature_toggles.cache_clear()
+
