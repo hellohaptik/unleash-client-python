@@ -288,5 +288,4 @@ class FeatureToggles:
 
     @staticmethod
     def clear_feature_toggles_lru_cache():
-        FeatureToggles.fetch_feature_toggles.cache_clear()
-
+        FeatureToggles.fetch_feature_toggles.__wrapped__.cache_clear()
