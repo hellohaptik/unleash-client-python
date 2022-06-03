@@ -150,6 +150,7 @@ class FeatureToggles:
         Returns:
             (bool): True if Feature is enabled else False
         """
+        LOGGER.info(f'Printing cache info {FeatureToggles.fetch_feature_toggles.__wrapper__cache_info()}')
         feature_toggles = FeatureToggles.fetch_feature_toggles()
         return domain_name in feature_toggles.get(feature_name, {}).get('domain_names', [])
 
@@ -288,4 +289,6 @@ class FeatureToggles:
 
     @staticmethod
     def clear_feature_toggles_lru_cache():
+        LOGGER.info(f'Clearing Feature Toggles')
         FeatureToggles.fetch_feature_toggles.__wrapped__.cache_clear()
+        LOGGER.info(f'Feature Toggles successfully cleared')
