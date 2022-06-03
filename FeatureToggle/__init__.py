@@ -150,7 +150,7 @@ class FeatureToggles:
         Returns:
             (bool): True if Feature is enabled else False
         """
-        LOGGER.info(f'Printing cache info {FeatureToggles.fetch_feature_toggles.__wrapper__.cache_info()}')
+        LOGGER.info(f'Printing cache info {FeatureToggles.fetch_feature_toggles.__wrapped__.cache_info()}')
         feature_toggles = FeatureToggles.fetch_feature_toggles()
         return domain_name in feature_toggles.get(feature_name, {}).get('domain_names', [])
 
@@ -165,7 +165,7 @@ class FeatureToggles:
         Returns:
             (bool): True if Feature is enabled else False
         """
-        LOGGER.info(f'Printing cache info {FeatureToggles.fetch_feature_toggles.__wrapper__.cache_info()}')
+        LOGGER.info(f'Printing cache info {FeatureToggles.fetch_feature_toggles.__wrapped__.cache_info()}')
         feature_toggles = FeatureToggles.fetch_feature_toggles()
         return partner_name in feature_toggles.get(feature_name, {}).get('partner_names', [])
 
