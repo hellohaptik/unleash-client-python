@@ -290,6 +290,8 @@ class FeatureToggles:
 
     @staticmethod
     def clear_feature_toggles_lru_cache():
+        LOGGER.info(f'Cache info before clearing {FeatureToggles.fetch_feature_toggles.__wrapped__.cache_info()}')
         LOGGER.info(f'Clearing Feature Toggles')
         FeatureToggles.fetch_feature_toggles.__wrapped__.cache_clear()
         LOGGER.info(f'Feature Toggles successfully cleared')
+        LOGGER.info(f'Cache info before clearing {FeatureToggles.fetch_feature_toggles.__wrapped__.cache_info()}')
