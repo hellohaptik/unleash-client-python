@@ -282,4 +282,3 @@ class FeatureToggles:
             # Handle this exception from where this util gets called
             raise Exception(f'An error occurred while parsing the response: {str(err)}')
         return response
-
