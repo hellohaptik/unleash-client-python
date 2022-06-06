@@ -7,7 +7,6 @@ from typing import Dict, Any, Optional
 from UnleashClient import constants as consts
 from UnleashClient import UnleashClient
 from UnleashClient.utils import LOGGER
-from FeatureToggle.utils import timed_lru_cache
 
 
 def split_and_strip(parameters: str):
@@ -51,7 +50,6 @@ class FeatureToggles:
             FeatureToggles.__redis_db = redis_db
             FeatureToggles.__enable_toggle_service = enable_toggle_service
             FeatureToggles.__cache = FeatureToggles.__get_cache()
-            LOGGER.info(f'Initializing Feature toggles')
         else:
             raise Exception("Client has been already initialized")
 
@@ -90,9 +88,9 @@ class FeatureToggles:
             )
         except Exception as err:
             raise Exception(
-                f'Exception occurred while updating the redis cache: {str(err)}'
+                f'Exception occured while updating the redis cache: {str(err)}'
             )
-        LOGGER.info(f'[Feature Toggles] Cache Updated')
+        LOGGER.info(f'Cache Updatation is Done')
 
     @staticmethod
     def __get_unleash_client():
@@ -147,8 +145,14 @@ class FeatureToggles:
         Returns:
             (bool): True if Feature is enabled else False
         """
-        feature_toggles = FeatureToggles.fetch_feature_toggles()
-        return domain_name in feature_toggles.get(feature_name, {}).get('domain_names', [])
+        feature_name = FeatureToggles.__get_full_feature_name(feature_name)
+
+        context = {}
+        if domain_name:
+            context['domain_names'] = domain_name
+
+        return FeatureToggles.__get_unleash_client().is_enabled(feature_name,
+                                                                context)
 
     @staticmethod
     def is_enabled_for_partner(feature_name: str,
@@ -161,8 +165,14 @@ class FeatureToggles:
         Returns:
             (bool): True if Feature is enabled else False
         """
-        feature_toggles = FeatureToggles.fetch_feature_toggles()
-        return partner_name in feature_toggles.get(feature_name, {}).get('partner_names', [])
+        feature_name = FeatureToggles.__get_full_feature_name(feature_name)
+
+        context = {}
+        if partner_name:
+            context['partner_names'] = partner_name
+
+        return FeatureToggles.__get_unleash_client().is_enabled(feature_name,
+                                                                context)
 
     @staticmethod
     def is_enabled_for_business(feature_name: str,
@@ -175,8 +185,14 @@ class FeatureToggles:
         Returns:
             (bool): True if Feature is enabled else False
         """
-        feature_toggles = FeatureToggles.fetch_feature_toggles()
-        return business_via_name in feature_toggles.get(feature_name, {}).get('business_via_names', [])
+        feature_name = FeatureToggles.__get_full_feature_name(feature_name)
+
+        context = {}
+        if business_via_name:
+            context['business_via_names'] = business_via_name
+
+        return FeatureToggles.__get_unleash_client().is_enabled(feature_name,
+                                                                context)
 
     @staticmethod
     def is_enabled_for_expert(feature_name: str,
@@ -189,8 +205,14 @@ class FeatureToggles:
         Returns:
             (bool): True if Feature is enabled else False
         """
-        feature_toggles = FeatureToggles.fetch_feature_toggles()
-        return expert_email in feature_toggles.get(feature_name, {}).get('expert_emails', [])
+        feature_name = FeatureToggles.__get_full_feature_name(feature_name)
+
+        context = {}
+        if expert_email:
+            context['expert_emails'] = expert_email
+
+        return FeatureToggles.__get_unleash_client().is_enabled(feature_name,
+                                                                context)
 
     @staticmethod
     def is_enabled_for_team(feature_name: str,
@@ -203,11 +225,19 @@ class FeatureToggles:
         Returns:
             (bool): True if feature is enabled else False
         """
-        feature_toggles = FeatureToggles.fetch_feature_toggles()
-        return team_id in feature_toggles.get(feature_name, {}).get('team_ids', [])
+        feature_name = FeatureToggles.__get_full_feature_name(feature_name)
+
+        context = {}
+        if team_id:
+            context['team_ids'] = team_id
+
+        return (
+            FeatureToggles
+            .__get_unleash_client()
+            .is_enabled(feature_name, context)
+        )
 
     @staticmethod
-    @timed_lru_cache(seconds=(60*60), maxsize=2048)
     def fetch_feature_toggles():
         """
         Returns(Dict):
@@ -221,7 +251,7 @@ class FeatureToggles:
             }
         """
         # TODO: Remove the cas and environment name from the feature toggles while returning the response
-        LOGGER.info(f'Loading Feature Toggles from Redis')
+
         if FeatureToggles.__cache is None:
             raise Exception(
                 'To update cache Feature Toggles class needs to be initialised'
@@ -281,4 +311,5 @@ class FeatureToggles:
         except Exception as err:
             # Handle this exception from where this util gets called
             raise Exception(f'An error occurred while parsing the response: {str(err)}')
+
         return response
