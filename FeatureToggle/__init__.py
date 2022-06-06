@@ -52,9 +52,6 @@ class FeatureToggles:
             FeatureToggles.__redis_db = redis_db
             FeatureToggles.__enable_toggle_service = enable_toggle_service
             FeatureToggles.__cache = FeatureToggles.__get_cache()
-            LOGGER.info(f'Initializing Feature toggles LRU cache')
-            FeatureToggles.fetch_feature_toggles()
-            LOGGER.info(f'Feature toggles LRU cache initialized')
         else:
             raise Exception("Client has been already initialized")
 
@@ -286,14 +283,3 @@ class FeatureToggles:
             raise Exception(f'An error occurred while parsing the response: {str(err)}')
         return response
 
-    @staticmethod
-    def clear_feature_toggles_lru_cache():
-        try:
-            gc.collect()
-            lru_cache_objects = [i for i in gc.get_objects() if isinstance(i, _lru_cache_wrapper)]
-            for object in lru_cache_objects:
-                object.cache_clear()
-                LOGGER.info(f'lru_cache_objects: {object}')
-            LOGGER.info(f'Feature toggles lru cache cleared')
-        except Exception as e:
-            LOGGER.error(f'[Feature-Toggle python client]: Exception while clearing lru cache{str(e)}')
