@@ -51,6 +51,7 @@ class FeatureToggles:
             FeatureToggles.__redis_db = redis_db
             FeatureToggles.__enable_toggle_service = enable_toggle_service
             FeatureToggles.__cache = FeatureToggles.__get_cache()
+            LOGGER.info(f'Initializing Feature toggles')
         else:
             raise Exception("Client has been already initialized")
 
