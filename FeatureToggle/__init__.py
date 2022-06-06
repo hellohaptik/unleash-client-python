@@ -1,5 +1,4 @@
 # Python Imports
-import gc
 import redis
 import pickle
 from typing import Dict, Any, Optional
