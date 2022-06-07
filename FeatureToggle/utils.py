@@ -1,4 +1,4 @@
-from UnleashClient import LOGGER
+from UnleashClient.utils import LOGGER
 from datetime import datetime, timedelta
 from functools import lru_cache, wraps
 
