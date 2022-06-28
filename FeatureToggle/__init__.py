@@ -85,9 +85,21 @@ class FeatureToggles:
 
         LOGGER.info(f'Updating the cache data: {data}')
         try:
+            data_to_set_in_redis = pickle.dumps(data)
             FeatureToggles.__cache.set(
-                consts.FEATURES_URL, pickle.dumps(data)
+                consts.FEATURES_URL, data_to_set_in_redis
             )
+
+            # validate whether the data was set correctly in Redis
+            actual_data_set_in_redis = FeatureToggles.__cache.get(
+                consts.FEATURES_URL
+            )
+            if actual_data_set_in_redis != data_to_set_in_redis:
+                raise Exception(
+                    f'Exception occurred while updating the redis cache: {str(err)} ' 
+                    f'|| Actual: {actual_data_set_in_redis} '
+                    f'|| Expected: {data_to_set_in_redis}'
+                )
         except Exception as err:
             raise Exception(
                 f'Exception occurred while updating the redis cache: {str(err)}'
