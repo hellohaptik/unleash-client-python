@@ -1,5 +1,6 @@
 # Python Imports
 import redis
+from redis.exceptions import LockError, BusyLoadingError, ConnectionError, RedisError
 import pickle
 from typing import Dict, Any, Optional
 
@@ -88,10 +89,14 @@ class FeatureToggles:
             FeatureToggles.__cache.set(
                 consts.FEATURES_URL, pickle.dumps(data)
             )
+        except (LockError, BusyLoadingError, ConnectionError, RedisError) as redis_err:
+            error_msg = f'Redis Exception occurred while updating the redis cache: {str(redis_err)}'
+            LOGGER.info(error_msg)
+            raise Exception(error_msg)
         except Exception as err:
-            raise Exception(
-                f'Exception occurred while updating the redis cache: {str(err)}'
-            )
+            error_msg = f'Unknown Exception occurred while updating the redis cache: {str(err)}'
+            LOGGER.info(error_msg)
+            raise Exception(error_msg)
         LOGGER.info(f'[Feature Toggles] Cache Updated')
 
     @staticmethod
