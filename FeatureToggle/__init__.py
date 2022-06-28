@@ -93,7 +93,7 @@ class FeatureToggles:
             # validate whether the data was set correctly in Redis
             actual_data_set_in_redis = FeatureToggles.__cache.get(
                 consts.FEATURES_URL
-            ) or '{}'
+            ) or ''
             if actual_data_set_in_redis != data_to_set_in_redis:
                 raise Exception(
                     f'Exception occurred while updating the redis cache: {str(err)} ' 
