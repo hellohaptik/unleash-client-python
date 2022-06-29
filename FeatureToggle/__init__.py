@@ -153,7 +153,8 @@ class FeatureToggles:
             (bool): True if Feature is enabled else False
         """
         feature_toggles = FeatureToggles.fetch_feature_toggles()
-        LOGGER.info(f"Enable_for_domain_FT_cache_info: {FeatureToggles.fetch_feature_toggles.__wrapped__.cache_info()}")
+        LOGGER.info(f"Enable_for_domain_FT_cache_info: "
+                    f"{FeatureToggles.fetch_feature_toggles.__wrapped__.cache_info()}")
         return domain_name in feature_toggles.get(feature_name, {}).get('domain_names', [])
 
     @staticmethod
@@ -168,7 +169,8 @@ class FeatureToggles:
             (bool): True if Feature is enabled else False
         """
         feature_toggles = FeatureToggles.fetch_feature_toggles()
-        LOGGER.info(f"Enable_for_partner_FT_cache_info: {FeatureToggles.fetch_feature_toggles.__wrapped__.cache_info()}")
+        LOGGER.info(f"Enable_for_partner_FT_cache_info: "
+                    f"{FeatureToggles.fetch_feature_toggles.__wrapped__.cache_info()}")
         return partner_name in feature_toggles.get(feature_name, {}).get('partner_names', [])
 
     @staticmethod
@@ -183,7 +185,8 @@ class FeatureToggles:
             (bool): True if Feature is enabled else False
         """
         feature_toggles = FeatureToggles.fetch_feature_toggles()
-        LOGGER.info(f"Enable_for_business_FT_cache_info: {FeatureToggles.fetch_feature_toggles.__wrapped__.cache_info()}")
+        LOGGER.info(f"Enable_for_business_FT_cache_info: "
+                    f"{FeatureToggles.fetch_feature_toggles.__wrapped__.cache_info()}")
         return business_via_name in feature_toggles.get(feature_name, {}).get('business_via_names', [])
 
     @staticmethod
@@ -198,7 +201,8 @@ class FeatureToggles:
             (bool): True if Feature is enabled else False
         """
         feature_toggles = FeatureToggles.fetch_feature_toggles()
-        LOGGER.info(f"Enable_for_expert_FT_cache_info: {FeatureToggles.fetch_feature_toggles.__wrapped__.cache_info()}")
+        LOGGER.info(f"Enable_for_expert_FT_cache_info: "
+                    f"{FeatureToggles.fetch_feature_toggles.__wrapped__.cache_info()}")
         return expert_email in feature_toggles.get(feature_name, {}).get('expert_emails', [])
 
     @staticmethod
@@ -213,7 +217,8 @@ class FeatureToggles:
             (bool): True if feature is enabled else False
         """
         feature_toggles = FeatureToggles.fetch_feature_toggles()
-        LOGGER.info(f"Enable_for_team_FT_cache_info: {FeatureToggles.fetch_feature_toggles.__wrapped__.cache_info()}")
+        LOGGER.info(f"Enable_for_team_FT_cache_info: "
+                    f"{FeatureToggles.fetch_feature_toggles.__wrapped__.cache_info()}")
         return team_id in feature_toggles.get(feature_name, {}).get('team_ids', [])
 
     @staticmethod
@@ -231,19 +236,18 @@ class FeatureToggles:
             }
         """
         # TODO: Remove the cas and environment name from the feature toggles while returning the response
-        LOGGER.info(f'Loading Feature Toggles from Redis')
-        LOGGER.info(f"Efetch_feature_toggles_cache_info: {FeatureToggles.fetch_feature_toggles.__wrapped__.cache_info()}")
-        if FeatureToggles.__cache is None:
-            raise Exception(
-                'To update cache Feature Toggles class needs to be initialised'
-            )
-
-        feature_toggles = pickle.loads(
-            FeatureToggles.__cache.get(consts.FEATURES_URL)
-        )
         response = {}
+        LOGGER.info(f'Loading Feature Toggles from Redis')
+        LOGGER.info(f"Fetch_feature_toggles_cache_info:"
+                    f"{FeatureToggles.fetch_feature_toggles.__wrapped__.cache_info()}")
+        if FeatureToggles.__cache is None:
+            LOGGER.error('To update cache Feature Toggles class needs to be initialised')
+            return response
 
         try:
+            feature_toggles = pickle.loads(
+                FeatureToggles.__cache.get(consts.FEATURES_URL)
+            )
             if feature_toggles:
                 for feature_toggle in feature_toggles:
                     full_feature_name = feature_toggle['name']
@@ -291,5 +295,5 @@ class FeatureToggles:
                         response[full_feature_name]['team_ids'] = team_ids
         except Exception as err:
             # Handle this exception from where this util gets called
-            raise Exception(f'An error occurred while parsing the response: {str(err)}')
+            LOGGER.error(f'An error occurred while parsing the response: {str(err)}')
         return response
