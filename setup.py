@@ -19,7 +19,7 @@ setup(
     long_description_content_type="text/markdown",
     url='https://github.com/Unleash/unleash-client-python',
     packages=find_packages(),
-    install_requires=["requests==2.25.0",
+    install_requires=["requests==2.31.0",
                       "fcache==0.4.7",
                       "mmh3==2.5.1",
                       "apscheduler==3.6.3"],
