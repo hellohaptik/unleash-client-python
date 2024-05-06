@@ -1,8 +1,9 @@
 # Python Imports
 import redis
+from redis.sentinel import Sentinel
 from redis.exceptions import LockError, BusyLoadingError, ConnectionError, RedisError
 import pickle
-from typing import Dict, Any, Optional
+from typing import Dict, Any, Optional, List
 
 # Unleash Imports
 from UnleashClient import constants as consts
@@ -29,6 +30,11 @@ class FeatureToggles:
     __environment = None
     __cache = None
     __enable_toggle_service = True
+    __sentinel_enabled = False
+    __sentinels = None
+    __sentinel_service_name = None
+    __redis_auth_enabled = False
+    __redis_password = None
 
     @staticmethod
     def initialize(url: str,
@@ -39,7 +45,13 @@ class FeatureToggles:
                    redis_host: str,
                    redis_port: str,
                    redis_db: str,
-                   enable_toggle_service: bool = True) -> None:
+                   enable_toggle_service: bool = True,
+                   sentinel_enabled: bool = False,
+                   sentinels: Optional[List] = None,
+                   sentinel_service_name: Optional[str] = None,
+                   redis_auth_enabled: bool = False,
+                   redis_password: Optional[str] = None
+                   ) -> None:
         """ Static access method. """
         if FeatureToggles.__client is None:
             FeatureToggles.__url = url
@@ -51,10 +63,55 @@ class FeatureToggles:
             FeatureToggles.__redis_port = redis_port
             FeatureToggles.__redis_db = redis_db
             FeatureToggles.__enable_toggle_service = enable_toggle_service
+            FeatureToggles.__sentinel_enabled = sentinel_enabled
+            FeatureToggles.__sentinels = sentinels
+            FeatureToggles.__sentinel_service_name = sentinel_service_name
+            FeatureToggles.__redis_auth_enabled = redis_auth_enabled
+            FeatureToggles.__redis_password = redis_password
             FeatureToggles.__cache = FeatureToggles.__get_cache()
             LOGGER.info(f'Initializing Feature toggles')
         else:
             raise Exception("Client has been already initialized")
+
+    @staticmethod
+    def __get_sentinel_connection():
+        """
+            Generates the Redis sentinel connection
+        :return: Redis<SentinelConnectionPool<service=service-name>
+        """
+        if FeatureToggles.__redis_auth_enabled and FeatureToggles.__redis_password:
+            sentinel = Sentinel(FeatureToggles.__sentinels,
+                                sentinel_kwargs={"password": FeatureToggles.__redis_password})
+            sentinel_connection_pool = sentinel.master_for(
+                FeatureToggles.__sentinel_service_name, password=FeatureToggles.__redis_password,
+                db=FeatureToggles.__redis_db
+            )
+        else:
+            sentinel = Sentinel(FeatureToggles.__sentinels)
+            sentinel_connection_pool = sentinel.master_for(FeatureToggles.__sentinel_service_name,
+                                                           db=FeatureToggles.__redis_db)
+        return sentinel_connection_pool
+
+    @staticmethod
+    def __get_non_sentinel_connection():
+        """
+            Generates the Redis non-sentinel connection
+        :return: Redis<ConnectionPool<Connection<host=,port=,db=>>>
+        """
+        if FeatureToggles.__redis_auth_enabled and FeatureToggles.__redis_password:
+            non_sentinel_connection_pool = redis.Redis(
+                host=FeatureToggles.__redis_host,
+                port=FeatureToggles.__redis_port,
+                db=FeatureToggles.__redis_db,
+                password=FeatureToggles.__redis_password
+            )
+        else:
+            non_sentinel_connection_pool = redis.Redis(
+                host=FeatureToggles.__redis_host,
+                port=FeatureToggles.__redis_port,
+                db=FeatureToggles.__redis_db
+            )
+        return non_sentinel_connection_pool
 
     @staticmethod
     def __get_cache():
@@ -62,11 +119,10 @@ class FeatureToggles:
         Create redis connection
         """
         if FeatureToggles.__cache is None:
-            FeatureToggles.__cache = redis.Redis(
-                host=FeatureToggles.__redis_host,
-                port=FeatureToggles.__redis_port,
-                db=FeatureToggles.__redis_db
-            )
+            if FeatureToggles.__sentinel_enabled:
+                FeatureToggles.__cache = FeatureToggles.__get_sentinel_connection()
+            else:
+                FeatureToggles.__cache = FeatureToggles.__get_non_sentinel_connection()
 
         return FeatureToggles.__cache
 
