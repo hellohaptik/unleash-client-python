@@ -1,11 +1,12 @@
 import redis
 
-from typing import Dict, Callable
+from typing import Dict, Callable, Optional
 
 from UnleashClient.periodic_tasks import fetch_and_load_features
-from UnleashClient.strategies import ApplicationHostname, Default, GradualRolloutRandom, \
-    GradualRolloutSessionId, GradualRolloutUserId, UserWithId, RemoteAddress, FlexibleRollout, \
-    EnableForDomains, EnableForBusinesses, EnableForPartners, EnableForExperts
+from UnleashClient.strategies import (
+    ApplicationHostname, Default, GradualRolloutRandom, GradualRolloutSessionId, GradualRolloutUserId, UserWithId,
+    RemoteAddress, FlexibleRollout, EnableForDomains, EnableForBusinesses, EnableForPartners, EnableForExperts
+)
 from UnleashClient import constants as consts
 from UnleashClient.strategies.EnableForTeamStrategy import EnableForTeams
 from UnleashClient.utils import LOGGER
@@ -24,8 +25,8 @@ class UnleashClient:
                  environment: str,
                  cas_name: str,
                  redis_host: str,
-                 redis_port: str,
-                 redis_db: str,
+                 redis_port: int,
+                 redis_db: int,
                  instance_id: str = "unleash-client-python",
                  refresh_interval: int = 15,
                  metrics_interval: int = 60,
@@ -34,7 +35,13 @@ class UnleashClient:
                  custom_headers: dict = {},
                  custom_options: dict = {},
                  custom_strategies: dict = {},
-                 cache_directory: str = None) -> None:
+                 cache_directory: str = None,
+                 sentinel_enabled: bool = False,
+                 sentinels: Optional[list] = None,
+                 sentinel_service_name: Optional[str] = None,
+                 redis_auth_enabled: bool = False,
+                 redis_password: Optional[str] = None
+                 ) -> None:
         """
         A client for the Unleash feature toggle system.
         :param url: URL of the unleash server, required.
@@ -65,12 +72,15 @@ class UnleashClient:
             "environment": self.unleash_environment
         }
 
-        # Class objects
-        self.cache = redis.Redis(
-            host=redis_host,
-            port=redis_port,
-            db=redis_db
-        )
+        if sentinel_enabled:
+            from common.redis_utils import RedisConnector
+            self.cache = RedisConnector.get_sentinel_connection(sentinels, sentinel_service_name, redis_db,
+                                                                redis_auth_enabled, redis_password)
+        else:
+            from common.redis_utils import RedisConnector
+            self.cache = RedisConnector.get_non_sentinel_connection(redis_host, redis_port, redis_db,
+                                                                    redis_auth_enabled, redis_password)
+
         self.features = {}  # type: Dict
 
         # Mappings

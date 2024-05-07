@@ -1,15 +1,15 @@
 # Python Imports
-import redis
-from redis.sentinel import Sentinel
+
 from redis.exceptions import LockError, BusyLoadingError, ConnectionError, RedisError
 import pickle
-from typing import Dict, Any, Optional, List
+from typing import Dict, Any, Optional
 
 # Unleash Imports
 from UnleashClient import constants as consts
 from UnleashClient import UnleashClient
 from UnleashClient.utils import LOGGER
 from FeatureToggle.utils import timed_lru_cache
+from common.redis_utils import RedisConnector
 
 
 def split_and_strip(parameters: str):
@@ -43,11 +43,11 @@ class FeatureToggles:
                    cas_name: str,
                    environment: str,
                    redis_host: str,
-                   redis_port: str,
-                   redis_db: str,
+                   redis_port: int,
+                   redis_db: int,
                    enable_toggle_service: bool = True,
                    sentinel_enabled: bool = False,
-                   sentinels: Optional[List] = None,
+                   sentinels: Optional[list] = None,
                    sentinel_service_name: Optional[str] = None,
                    redis_auth_enabled: bool = False,
                    redis_password: Optional[str] = None
@@ -68,50 +68,27 @@ class FeatureToggles:
             FeatureToggles.__sentinel_service_name = sentinel_service_name
             FeatureToggles.__redis_auth_enabled = redis_auth_enabled
             FeatureToggles.__redis_password = redis_password
+            FeatureToggles.__validate_initialization_params()
             FeatureToggles.__cache = FeatureToggles.__get_cache()
             LOGGER.info(f'Initializing Feature toggles')
         else:
             raise Exception("Client has been already initialized")
 
     @staticmethod
-    def __get_sentinel_connection():
+    def __validate_initialization_params():
         """
-            Generates the Redis sentinel connection
-        :return: Redis<SentinelConnectionPool<service=service-name>
+            Function that checks required Args for creating a Redis Connection
+        :return:
         """
-        if FeatureToggles.__redis_auth_enabled and FeatureToggles.__redis_password:
-            sentinel = Sentinel(FeatureToggles.__sentinels,
-                                sentinel_kwargs={"password": FeatureToggles.__redis_password})
-            sentinel_connection_pool = sentinel.master_for(
-                FeatureToggles.__sentinel_service_name, password=FeatureToggles.__redis_password,
-                db=FeatureToggles.__redis_db
-            )
-        else:
-            sentinel = Sentinel(FeatureToggles.__sentinels)
-            sentinel_connection_pool = sentinel.master_for(FeatureToggles.__sentinel_service_name,
-                                                           db=FeatureToggles.__redis_db)
-        return sentinel_connection_pool
+        if FeatureToggles.__sentinel_enabled:
+            if not all([FeatureToggles.__sentinels, FeatureToggles.__sentinel_service_name]):
+                raise ValueError(
+                    "FeatureToggles [__validate_initialization_params] Mandatory args for Sentinel are missing."
+                    "Required Args: (sentinels, sentinel_service_name)")
 
-    @staticmethod
-    def __get_non_sentinel_connection():
-        """
-            Generates the Redis non-sentinel connection
-        :return: Redis<ConnectionPool<Connection<host=,port=,db=>>>
-        """
-        if FeatureToggles.__redis_auth_enabled and FeatureToggles.__redis_password:
-            non_sentinel_connection_pool = redis.Redis(
-                host=FeatureToggles.__redis_host,
-                port=FeatureToggles.__redis_port,
-                db=FeatureToggles.__redis_db,
-                password=FeatureToggles.__redis_password
-            )
-        else:
-            non_sentinel_connection_pool = redis.Redis(
-                host=FeatureToggles.__redis_host,
-                port=FeatureToggles.__redis_port,
-                db=FeatureToggles.__redis_db
-            )
-        return non_sentinel_connection_pool
+        if FeatureToggles.__redis_auth_enabled:
+            if not FeatureToggles.__redis_password:
+                raise ValueError("FeatureToggles [__validate_initialization_params] Redis Password not provided.")
 
     @staticmethod
     def __get_cache():
@@ -120,9 +97,15 @@ class FeatureToggles:
         """
         if FeatureToggles.__cache is None:
             if FeatureToggles.__sentinel_enabled:
-                FeatureToggles.__cache = FeatureToggles.__get_sentinel_connection()
+                FeatureToggles.__cache = RedisConnector.get_sentinel_connection(
+                    FeatureToggles.__sentinels, FeatureToggles.__sentinel_service_name, FeatureToggles.__redis_db,
+                    FeatureToggles.__redis_auth_enabled, FeatureToggles.__redis_password
+                )
             else:
-                FeatureToggles.__cache = FeatureToggles.__get_non_sentinel_connection()
+                FeatureToggles.__cache = RedisConnector.get_non_sentinel_connection(
+                    FeatureToggles.__redis_host, FeatureToggles.__redis_port, FeatureToggles.__redis_db,
+                    FeatureToggles.__redis_auth_enabled, FeatureToggles.__redis_password
+                )
 
         return FeatureToggles.__cache
 
@@ -169,7 +152,12 @@ class FeatureToggles:
                 environment=FeatureToggles.__environment,
                 redis_host=FeatureToggles.__redis_host,
                 redis_port=FeatureToggles.__redis_port,
-                redis_db=FeatureToggles.__redis_db
+                redis_db=FeatureToggles.__redis_db,
+                sentinel_enabled=FeatureToggles.__sentinel_enabled,
+                sentinels=FeatureToggles.__sentinels,
+                sentinel_service_name= FeatureToggles.__sentinel_service_name,
+                redis_auth_enabled=FeatureToggles.__redis_auth_enabled,
+                redis_password=FeatureToggles.__redis_password
             )
             FeatureToggles.__client.initialize_client()
 
