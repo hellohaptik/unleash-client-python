@@ -1,5 +1,3 @@
-import redis
-
 from typing import Dict, Callable, Optional
 
 from UnleashClient.periodic_tasks import fetch_and_load_features
@@ -73,11 +71,11 @@ class UnleashClient:
         }
 
         if sentinel_enabled:
-            from common.redis_utils import RedisConnector
+            from FeatureToggle.redis_utils import RedisConnector
             self.cache = RedisConnector.get_sentinel_connection(sentinels, sentinel_service_name, redis_db,
                                                                 redis_auth_enabled, redis_password)
         else:
-            from common.redis_utils import RedisConnector
+            from FeatureToggle.redis_utils import RedisConnector
             self.cache = RedisConnector.get_non_sentinel_connection(redis_host, redis_port, redis_db,
                                                                     redis_auth_enabled, redis_password)
 

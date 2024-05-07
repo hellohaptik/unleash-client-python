@@ -9,7 +9,7 @@ from UnleashClient import constants as consts
 from UnleashClient import UnleashClient
 from UnleashClient.utils import LOGGER
 from FeatureToggle.utils import timed_lru_cache
-from common.redis_utils import RedisConnector
+from FeatureToggle.redis_utils import RedisConnector
 
 
 def split_and_strip(parameters: str):
