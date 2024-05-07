@@ -20,6 +20,13 @@ class RedisConnector:
         :param redis_db:
         :return: Redis<SentinelConnectionPool<service=service-name>
         """
+        if not all([sentinels, sentinel_service_name]):
+            raise ValueError(
+                "[get_sentinel_connection] Mandatory args for Redis Sentinel are missing."
+                "Required Args: (sentinels, sentinel_service_name)"
+            )
+        if redis_auth_enabled and not redis_password:
+            raise ValueError("[get_sentinel_connection] Redis Auth enabled but Redis Password not provided.")
 
         if redis_auth_enabled and redis_password:
             sentinel = Sentinel(sentinels, sentinel_kwargs={"password": redis_password})
@@ -42,6 +49,9 @@ class RedisConnector:
         :param redis_password:
         :return: Redis<ConnectionPool<Connection<host=,port=,db=>>>
         """
+        if redis_auth_enabled and not redis_password:
+            raise ValueError("[get_non_sentinel_connection] Redis Auth enabled but Redis Password not provided.")
+
         if redis_auth_enabled and redis_password:
             non_sentinel_connection_pool = redis.Redis(
                 host=redis_host,

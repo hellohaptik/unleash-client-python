@@ -68,27 +68,10 @@ class FeatureToggles:
             FeatureToggles.__sentinel_service_name = sentinel_service_name
             FeatureToggles.__redis_auth_enabled = redis_auth_enabled
             FeatureToggles.__redis_password = redis_password
-            FeatureToggles.__validate_initialization_params()
             FeatureToggles.__cache = FeatureToggles.__get_cache()
             LOGGER.info(f'Initializing Feature toggles')
         else:
             raise Exception("Client has been already initialized")
-
-    @staticmethod
-    def __validate_initialization_params():
-        """
-            Function that checks required Args for creating a Redis Connection
-        :return:
-        """
-        if FeatureToggles.__sentinel_enabled:
-            if not all([FeatureToggles.__sentinels, FeatureToggles.__sentinel_service_name]):
-                raise ValueError(
-                    "FeatureToggles [__validate_initialization_params] Mandatory args for Sentinel are missing."
-                    "Required Args: (sentinels, sentinel_service_name)")
-
-        if FeatureToggles.__redis_auth_enabled:
-            if not FeatureToggles.__redis_password:
-                raise ValueError("FeatureToggles [__validate_initialization_params] Redis Password not provided.")
 
     @staticmethod
     def __get_cache():
