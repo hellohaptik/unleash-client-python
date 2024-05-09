@@ -69,13 +69,11 @@ class UnleashClient:
             "appName": self.unleash_app_name,
             "environment": self.unleash_environment
         }
-
+        from FeatureToggle.redis_utils import RedisConnector
         if sentinel_enabled:
-            from FeatureToggle.redis_utils import RedisConnector
             self.cache = RedisConnector.get_sentinel_connection(sentinels, sentinel_service_name, redis_db,
                                                                 redis_auth_enabled, redis_password)
         else:
-            from FeatureToggle.redis_utils import RedisConnector
             self.cache = RedisConnector.get_non_sentinel_connection(redis_host, redis_port, redis_db,
                                                                     redis_auth_enabled, redis_password)
 
