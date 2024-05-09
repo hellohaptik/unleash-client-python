@@ -275,6 +275,22 @@ class FeatureToggles:
             feature_toggles = pickle.loads(
                 FeatureToggles.__cache.get(consts.FEATURES_URL)
             )
+            """
+            Sample output of feature_toggles
+            [
+                {
+                "name": "devdanish.development.redis_auth", 
+                "strategies": [
+                                    {
+                                        "name": "EnableForPartners",
+                                        "parameters": {
+                                                        "partner_names": "client1, client2"
+                                        }
+                                    }
+                                ]
+                }
+            ]
+            """
             if feature_toggles:
                 for feature_toggle in feature_toggles:
                     full_feature_name = feature_toggle['name']
@@ -293,7 +309,6 @@ class FeatureToggles:
                     if cas_name == FeatureToggles.__cas_name and environment == FeatureToggles.__environment:
                         # Strip CAS and ENV name from feature name
                         active_cas_env_name = f'{cas_name}.{environment}.'
-                        full_feature_name = full_feature_name.replace(active_cas_env_name, '')
                         full_feature_name = full_feature_name.replace(active_cas_env_name, '')
                         if full_feature_name not in response:
                             response[full_feature_name] = {}
