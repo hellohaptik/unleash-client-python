@@ -1,5 +1,5 @@
 # Python Imports
-import redis
+
 from redis.exceptions import LockError, BusyLoadingError, ConnectionError, RedisError
 import pickle
 from typing import Dict, Any, Optional
@@ -9,6 +9,7 @@ from UnleashClient import constants as consts
 from UnleashClient import UnleashClient
 from UnleashClient.utils import LOGGER
 from FeatureToggle.utils import timed_lru_cache
+from FeatureToggle.redis_utils import RedisConnector
 
 
 def split_and_strip(parameters: str):
@@ -29,6 +30,11 @@ class FeatureToggles:
     __environment = None
     __cache = None
     __enable_toggle_service = True
+    __sentinel_enabled = False
+    __sentinels = None
+    __sentinel_service_name = None
+    __redis_auth_enabled = False
+    __redis_password = None
 
     @staticmethod
     def initialize(url: str,
@@ -37,9 +43,15 @@ class FeatureToggles:
                    cas_name: str,
                    environment: str,
                    redis_host: str,
-                   redis_port: str,
-                   redis_db: str,
-                   enable_toggle_service: bool = True) -> None:
+                   redis_port: int,
+                   redis_db: int,
+                   enable_toggle_service: bool = True,
+                   sentinel_enabled: bool = False,
+                   sentinels: Optional[list] = None,
+                   sentinel_service_name: Optional[str] = None,
+                   redis_auth_enabled: bool = False,
+                   redis_password: Optional[str] = None
+                   ) -> None:
         """ Static access method. """
         if FeatureToggles.__client is None:
             FeatureToggles.__url = url
@@ -51,6 +63,11 @@ class FeatureToggles:
             FeatureToggles.__redis_port = redis_port
             FeatureToggles.__redis_db = redis_db
             FeatureToggles.__enable_toggle_service = enable_toggle_service
+            FeatureToggles.__sentinel_enabled = sentinel_enabled
+            FeatureToggles.__sentinels = sentinels
+            FeatureToggles.__sentinel_service_name = sentinel_service_name
+            FeatureToggles.__redis_auth_enabled = redis_auth_enabled
+            FeatureToggles.__redis_password = redis_password
             FeatureToggles.__cache = FeatureToggles.__get_cache()
             LOGGER.info(f'Initializing Feature toggles')
         else:
@@ -62,11 +79,16 @@ class FeatureToggles:
         Create redis connection
         """
         if FeatureToggles.__cache is None:
-            FeatureToggles.__cache = redis.Redis(
-                host=FeatureToggles.__redis_host,
-                port=FeatureToggles.__redis_port,
-                db=FeatureToggles.__redis_db
-            )
+            if FeatureToggles.__sentinel_enabled:
+                FeatureToggles.__cache = RedisConnector.get_sentinel_connection(
+                    FeatureToggles.__sentinels, FeatureToggles.__sentinel_service_name, FeatureToggles.__redis_db,
+                    FeatureToggles.__redis_auth_enabled, FeatureToggles.__redis_password
+                )
+            else:
+                FeatureToggles.__cache = RedisConnector.get_non_sentinel_connection(
+                    FeatureToggles.__redis_host, FeatureToggles.__redis_port, FeatureToggles.__redis_db,
+                    FeatureToggles.__redis_auth_enabled, FeatureToggles.__redis_password
+                )
 
         return FeatureToggles.__cache
 
@@ -113,7 +135,12 @@ class FeatureToggles:
                 environment=FeatureToggles.__environment,
                 redis_host=FeatureToggles.__redis_host,
                 redis_port=FeatureToggles.__redis_port,
-                redis_db=FeatureToggles.__redis_db
+                redis_db=FeatureToggles.__redis_db,
+                sentinel_enabled=FeatureToggles.__sentinel_enabled,
+                sentinels=FeatureToggles.__sentinels,
+                sentinel_service_name= FeatureToggles.__sentinel_service_name,
+                redis_auth_enabled=FeatureToggles.__redis_auth_enabled,
+                redis_password=FeatureToggles.__redis_password
             )
             FeatureToggles.__client.initialize_client()
 
@@ -248,6 +275,22 @@ class FeatureToggles:
             feature_toggles = pickle.loads(
                 FeatureToggles.__cache.get(consts.FEATURES_URL)
             )
+            """
+            Sample output of feature_toggles
+            [
+                {
+                "name": "devdanish.development.redis_auth", 
+                "strategies": [
+                                    {
+                                        "name": "EnableForPartners",
+                                        "parameters": {
+                                                        "partner_names": "client1, client2"
+                                        }
+                                    }
+                                ]
+                }
+            ]
+            """
             if feature_toggles:
                 for feature_toggle in feature_toggles:
                     full_feature_name = feature_toggle['name']
@@ -266,7 +309,6 @@ class FeatureToggles:
                     if cas_name == FeatureToggles.__cas_name and environment == FeatureToggles.__environment:
                         # Strip CAS and ENV name from feature name
                         active_cas_env_name = f'{cas_name}.{environment}.'
-                        full_feature_name = full_feature_name.replace(active_cas_env_name, '')
                         full_feature_name = full_feature_name.replace(active_cas_env_name, '')
                         if full_feature_name not in response:
                             response[full_feature_name] = {}
