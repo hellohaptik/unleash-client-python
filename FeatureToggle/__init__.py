@@ -293,6 +293,8 @@ class FeatureToggles:
             """
             if feature_toggles:
                 for feature_toggle in feature_toggles:
+                    if not feature_toggle.get('enabled', False):
+                        continue
                     full_feature_name = feature_toggle['name']
                     # split the feature and get compare the cas and environment name
                     feature = full_feature_name.split('.')
