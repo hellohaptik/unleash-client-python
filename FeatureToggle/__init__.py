@@ -182,7 +182,10 @@ class FeatureToggles:
         feature_toggles = FeatureToggles.fetch_feature_toggles()
         LOGGER.info(f"Enable_for_domain_FT_cache_info: "
                     f"{FeatureToggles.fetch_feature_toggles.__wrapped__.cache_info()}")
-        return domain_name in feature_toggles.get(feature_name, {}).get('domain_names', [])
+        feature_data = feature_toggles.get(feature_name, {})
+        if feature_data.get('enabled_for_all', False):
+            return True
+        return domain_name in feature_data.get('domain_names', [])
 
     @staticmethod
     def is_enabled_for_partner(feature_name: str,
@@ -198,7 +201,10 @@ class FeatureToggles:
         feature_toggles = FeatureToggles.fetch_feature_toggles()
         LOGGER.info(f"Enable_for_partner_FT_cache_info: "
                     f"{FeatureToggles.fetch_feature_toggles.__wrapped__.cache_info()}")
-        return partner_name in feature_toggles.get(feature_name, {}).get('partner_names', [])
+        feature_data = feature_toggles.get(feature_name, {})
+        if feature_data.get('enabled_for_all', False):
+            return True
+        return partner_name in feature_data.get('partner_names', [])
 
     @staticmethod
     def is_enabled_for_business(feature_name: str,
@@ -214,7 +220,10 @@ class FeatureToggles:
         feature_toggles = FeatureToggles.fetch_feature_toggles()
         LOGGER.info(f"Enable_for_business_FT_cache_info: "
                     f"{FeatureToggles.fetch_feature_toggles.__wrapped__.cache_info()}")
-        return business_via_name in feature_toggles.get(feature_name, {}).get('business_via_names', [])
+        feature_data = feature_toggles.get(feature_name, {})
+        if feature_data.get('enabled_for_all', False):
+            return True
+        return business_via_name in feature_data.get('business_via_names', [])
 
     @staticmethod
     def is_enabled_for_expert(feature_name: str,
@@ -230,7 +239,10 @@ class FeatureToggles:
         feature_toggles = FeatureToggles.fetch_feature_toggles()
         LOGGER.info(f"Enable_for_expert_FT_cache_info: "
                     f"{FeatureToggles.fetch_feature_toggles.__wrapped__.cache_info()}")
-        return expert_email in feature_toggles.get(feature_name, {}).get('expert_emails', [])
+        feature_data = feature_toggles.get(feature_name, {})
+        if feature_data.get('enabled_for_all', False):
+            return True
+        return expert_email in feature_data.get('expert_emails', [])
 
     @staticmethod
     def is_enabled_for_team(feature_name: str,
@@ -246,7 +258,10 @@ class FeatureToggles:
         feature_toggles = FeatureToggles.fetch_feature_toggles()
         LOGGER.info(f"Enable_for_team_FT_cache_info: "
                     f"{FeatureToggles.fetch_feature_toggles.__wrapped__.cache_info()}")
-        return team_id in feature_toggles.get(feature_name, {}).get('team_ids', [])
+        feature_data = feature_toggles.get(feature_name, {})
+        if feature_data.get('enabled_for_all', False):
+            return True
+        return team_id in feature_data.get('team_ids', [])
 
     @staticmethod
     @timed_lru_cache(seconds=(60*60), maxsize=2048)
@@ -305,6 +320,7 @@ class FeatureToggles:
                     business_via_names = []
                     expert_emails = []
                     team_ids = []
+                    enabled_for_all = False
 
                     if cas_name == FeatureToggles.__cas_name and environment == FeatureToggles.__environment:
                         # Strip CAS and ENV name from feature name
@@ -326,6 +342,8 @@ class FeatureToggles:
                                 expert_emails = split_and_strip(parameters.get('expert_emails', ''))
                             elif strategy_name == 'EnableForTeams':
                                 team_ids = split_and_strip(parameters.get('team_ids', ''))
+                            elif strategy_name == 'EnableForAll':
+                                enabled_for_all = parameters.get('enabled', '') == 'true'
 
                                 # Keep updating this list for new strategies which gets added
 
@@ -335,6 +353,7 @@ class FeatureToggles:
                         response[full_feature_name]['domain_names'] = domain_names
                         response[full_feature_name]['expert_emails'] = expert_emails
                         response[full_feature_name]['team_ids'] = team_ids
+                        response[full_feature_name]['enabled_for_all'] = enabled_for_all
         except Exception as err:
             # Handle this exception from where this util gets called
             LOGGER.error(f'An error occurred while parsing the response: {str(err)}')
