@@ -29,11 +29,12 @@ class RedisConnector:
             raise ValueError("[get_sentinel_connection] Redis Auth enabled but Redis Password not provided.")
 
         if redis_auth_enabled and redis_password:
-            sentinel = Sentinel(sentinels, sentinel_kwargs={"password": redis_password})
-            sentinel_connection_pool = sentinel.master_for(sentinel_service_name, password=redis_password, db=redis_db)
+            sentinel = Sentinel(sentinels, sentinel_kwargs={"password": redis_password, "protocol": 2})
+            sentinel_connection_pool = sentinel.master_for(sentinel_service_name, password=redis_password, db=redis_db,
+                                                           protocol=2)
         else:
-            sentinel = Sentinel(sentinels)
-            sentinel_connection_pool = sentinel.master_for(sentinel_service_name, db=redis_db)
+            sentinel = Sentinel(sentinels, sentinel_kwargs={"protocol": 2})
+            sentinel_connection_pool = sentinel.master_for(sentinel_service_name, db=redis_db, protocol=2)
         return sentinel_connection_pool
 
     @staticmethod
@@ -57,12 +58,14 @@ class RedisConnector:
                 host=redis_host,
                 port=redis_port,
                 db=redis_db,
-                password=redis_password
+                password=redis_password,
+                protocol=2
             )
         else:
             non_sentinel_connection_pool = redis.Redis(
                 host=redis_host,
                 port=redis_port,
-                db=redis_db
+                db=redis_db,
+                protocol=2
             )
         return non_sentinel_connection_pool
